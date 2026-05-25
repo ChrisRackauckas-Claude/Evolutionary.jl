@@ -104,8 +104,14 @@ function show(io::IO,c::BoxConstraints)
     print(io, "Box Constraints:")
     indent = "    "
     cb = bounds(c)
-    NLSolversBase.showeq(io, indent, cb.eqx, cb.valx, 'x', :bracket)
-    NLSolversBase.showineq(io, indent, cb.ineqx, cb.σx, cb.bx, 'x', :bracket)
+    if !isempty(cb.eqx)
+        print(io, '\n', indent)
+        join(io, ("x[$i]=$v" for (i, v) in zip(cb.eqx, cb.valx)), ", ")
+    end
+    if !isempty(cb.ineqx)
+        print(io, '\n', indent)
+        join(io, ("x[$i]$(σ > 0 ? '≥' : '≤')$b" for (i, σ, b) in zip(cb.ineqx, cb.σx, cb.bx)), ", ")
+    end
 end
 
 """

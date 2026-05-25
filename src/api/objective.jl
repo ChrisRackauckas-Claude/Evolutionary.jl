@@ -40,6 +40,8 @@ end
 
 f_calls(obj::EvolutionaryObjective) = obj.f_calls
 
+value(obj::EvolutionaryObjective) = obj.F
+
 """
     ismultiobjective(objfun)
 
