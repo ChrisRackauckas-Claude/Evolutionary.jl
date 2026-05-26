@@ -1,0 +1,13 @@
+[files]
+extend-exclude = [
+    "examples/*.ipynb",
+]
+
+[default.extend-words]
+# Journal abbreviation "Comput." (Applied Math. and Computation, etc.)
+Comput = "Comput"
+
+[default.extend-identifiers]
+# Type parameter names and short local variables that look like typos
+OT = "OT"
+nd = "nd"

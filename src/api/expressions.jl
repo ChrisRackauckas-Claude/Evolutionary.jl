@@ -281,7 +281,7 @@ function contains(ex::Expr, sym::Symbol)
     return false
 end
 
-# Construct infix string from an exporession
+# Construct infix string from an expression
 function infix(io::IO, root; digits = 3)
     return if isa(root, Number)
         print(io, round(root, digits = digits))

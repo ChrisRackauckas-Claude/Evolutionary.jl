@@ -224,7 +224,7 @@ function show(io::IO, c::WorstFitnessConstraints)
 end
 
 """
-This type provides an additional type constraints on the varaibles required for mixed integer optimization problmes.
+This type provides an additional type constraints on the variables required for mixed integer optimization problems.
 """
 struct MixedTypePenaltyConstraints{C <: AbstractConstraints} <: AbstractConstraints
     penalty::C
