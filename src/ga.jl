@@ -14,7 +14,7 @@ Floating number specifies fraction of population.
 - `after_op`: a function that is executed on each individual afrer mutation operations (default: `identity`)
 - `metrics` is a collection of convergence metrics.
 """
-struct GA{T1,T2,T3,T4} <: AbstractOptimizer
+struct GA{T1, T2, T3, T4} <: AbstractOptimizer
     populationSize::Int
     crossoverRate::Float64
     mutationRate::Float64
@@ -25,21 +25,23 @@ struct GA{T1,T2,T3,T4} <: AbstractOptimizer
     after_op::T4
     metrics::ConvergenceMetrics
 
-    GA(; populationSize::Int=50, crossoverRate::Float64=0.8, mutationRate::Float64=0.1,
-        ɛ::Real=0, epsilon::Real=ɛ,
-        selection::T1=tournament(2),
-        crossover::T2=genop,
-        mutation::T3=genop,
-        after_op::T4=identity,
-        metrics = ConvergenceMetric[AbsDiff(1e-12)]) where {T1, T2, T3, T4} =
-        new{T1,T2,T3,T4}(populationSize, crossoverRate, mutationRate, epsilon, selection, crossover, mutation, after_op, metrics)
+    GA(;
+        populationSize::Int = 50, crossoverRate::Float64 = 0.8, mutationRate::Float64 = 0.1,
+        ɛ::Real = 0, epsilon::Real = ɛ,
+        selection::T1 = tournament(2),
+        crossover::T2 = genop,
+        mutation::T3 = genop,
+        after_op::T4 = identity,
+        metrics = ConvergenceMetric[AbsDiff(1.0e-12)]
+    ) where {T1, T2, T3, T4} =
+        new{T1, T2, T3, T4}(populationSize, crossoverRate, mutationRate, epsilon, selection, crossover, mutation, after_op, metrics)
 end
 population_size(method::GA) = method.populationSize
-default_options(method::GA) = (iterations=1000,)
+default_options(method::GA) = (iterations = 1000,)
 summary(m::GA) = "GA[P=$(m.populationSize),x=$(m.crossoverRate),μ=$(m.mutationRate),ɛ=$(m.ɛ)]"
-show(io::IO,m::GA) = print(io, summary(m))
+show(io::IO, m::GA) = print(io, summary(m))
 
-mutable struct GAState{T,IT} <: AbstractOptimizerState
+mutable struct GAState{T, IT} <: AbstractOptimizerState
     N::Int
     eliteSize::Int
     fitness::T
@@ -81,19 +83,19 @@ function update_state!(objfun, constraints, state, parents::AbstractVector{IT}, 
     offspring = similar(parents)
 
     # select offspring
-    selected = method.selection(state.fitpop, populationSize, rng=rng)
+    selected = method.selection(state.fitpop, populationSize, rng = rng)
 
     # perform mating
-    recombine!(offspring, parents, selected, method, rng=rng)
+    recombine!(offspring, parents, selected, method, rng = rng)
 
     # perform mutation
-    mutate!(view(offspring, 1:populationSize), method, constraints, rng=rng)
+    mutate!(view(offspring, 1:populationSize), method, constraints, rng = rng)
 
     # Elitism (copy elite individuals from selection to the offspring)
     selfit = view(state.fitpop, selected)
     fitidxs = sortperm(selfit)
     for i in 1:state.eliteSize
-        subs = populationSize+i
+        subs = populationSize + i
         offspring[subs] = parents[selected[fitidxs[i]]]
     end
 
@@ -114,36 +116,41 @@ function update_state!(objfun, constraints, state, parents::AbstractVector{IT}, 
     return false
 end
 
-function recombine!(offspring, parents, selected, method;
-                    rng::AbstractRNG=default_rng())
+function recombine!(
+        offspring, parents, selected, method;
+        rng::AbstractRNG = default_rng()
+    )
     n = length(selected)
-    mates = ((i,i == n ? i-1 : i+1) for i in 1:2:n)
-    for (i,j) in mates
+    mates = ((i, i == n ? i - 1 : i + 1) for i in 1:2:n)
+    for (i, j) in mates
         p1, p2 = parents[selected[i]], parents[selected[j]]
         if rand(rng) < method.crossoverRate
-            offspring[i], offspring[j] = method.crossover(p1, p2, rng=rng)
+            offspring[i], offspring[j] = method.crossover(p1, p2, rng = rng)
         else
             offspring[i], offspring[j] = p1, p2
         end
     end
 
+    return
 end
 
-function mutate!(population, method, constraints;
-                 rng::AbstractRNG=default_rng())
+function mutate!(
+        population, method, constraints;
+        rng::AbstractRNG = default_rng()
+    )
     n = length(population)
     for i in 1:n
         if rand(rng) < method.mutationRate
-            method.mutation(population[i], rng=rng)
+            method.mutation(population[i], rng = rng)
         end
         apply!(constraints, population[i])
     end
+    return
 end
 
 function evaluate!(objfun, fitness, population, constraints)
     # calculate fitness of the population
     value!(objfun, fitness, population)
     # apply penalty to fitness
-    penalty!(fitness, constraints, population)
+    return penalty!(fitness, constraints, population)
 end
-

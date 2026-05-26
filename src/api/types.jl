@@ -9,7 +9,7 @@ Abstract evolutionary optimizer algorithm
 abstract type AbstractOptimizer end
 
 function print_header(method::AbstractOptimizer)
-    println("Iter     Function value")
+    return println("Iter     Function value")
 end
 population_size(method::AbstractOptimizer) = error("`population_size` is not implemented for $(summary(method)).")
 metrics(method::AbstractOptimizer) = method.metrics
@@ -104,13 +104,13 @@ There are following options available:
 - `parallelization::Symbol`: allows parallelization of the population fitness evaluation if set to `:thread` using multiple threads (*default: `:serial`*)
 - `rng::AbstractRNG`: a random number generator object that is used to control generation of random data during the evolutionary optimization (*default: `Random.default_rng()`*)
 """
-@kwdef struct Options{TCallback<:Union{Nothing, Function}, TRNG <: AbstractRNG}
+@kwdef struct Options{TCallback <: Union{Nothing, Function}, TRNG <: AbstractRNG}
     abstol::Float64 = Inf
     reltol::Float64 = Inf
     successive_f_tol::Int = 10
     iterations::Int = 1000
     store_trace::Bool = false
-    show_trace::Bool  = false
+    show_trace::Bool = false
     show_every::Int = 1
     callback::TCallback = nothing
     time_limit::Float64 = NaN
@@ -121,11 +121,12 @@ function show(io::IO, o::Options)
     for k in fieldnames(typeof(o))
         v = getfield(o, k)
         if v === nothing
-            print(io, lpad("$(k)",24) *" = nothing\n")
+            print(io, lpad("$(k)", 24) * " = nothing\n")
         else
-            print(io, lpad("$(k)",24) *" = $v\n")
+            print(io, lpad("$(k)", 24) * " = $v\n")
         end
     end
+    return
 end
 
 
@@ -134,21 +135,21 @@ end
 struct OptimizationTraceRecord{T, O <: AbstractOptimizer}
     iteration::Int
     value::T
-    metadata::Dict{String,Any}
+    metadata::Dict{String, Any}
 end
 value(tr::OptimizationTraceRecord) = tr.value
 
 function show(io::IO, t::OptimizationTraceRecord)
-    print(io, lpad("$(t.iteration)",6))
+    print(io, lpad("$(t.iteration)", 6))
     print(io, "   ")
-    print(io, lpad("$(t.value)",14))
+    print(io, lpad("$(t.value)", 14))
     for (key, value) in t.metadata
         print(io, "\n * $key: $value")
     end
     return
 end
 
-const OptimizationTrace{T,O} = Vector{OptimizationTraceRecord{T,O}}
+const OptimizationTrace{T, O} = Vector{OptimizationTraceRecord{T, O}}
 
 function show(io::IO, tr::OptimizationTrace)
     print(io, "Iter     Function value\n")
@@ -189,7 +190,7 @@ end
 
 Returns an isotropic strategy object, which has an one mutation parameter for all object parameter components, with ``\\sigma = 1.0``, ``\\tau_0 = \\sqrt{2N}^{-1}``, ``\\tau = \\sqrt{2\\sqrt{N}}^{-1}``
 """
-IsotropicStrategy(N::Integer) = IsotropicStrategy{Float64}(1.0, 1.0/sqrt(2N), 1.0/sqrt(2*sqrt(N)))
+IsotropicStrategy(N::Integer) = IsotropicStrategy{Float64}(1.0, 1.0 / sqrt(2N), 1.0 / sqrt(2 * sqrt(N)))
 copy(s::IsotropicStrategy) = IsotropicStrategy{typeof(s.σ)}(s.σ, s.τ₀, s.τ)
 
 """
@@ -208,5 +209,5 @@ end
 
 Returns an anisotropic strategy object, which has an one mutation parameter for each object parameter component, with ``\\sigma = [1, \\ldots, 1]^N``, ``\\tau_0 = \\sqrt{2N}^{-1}``, ``\\tau = \\sqrt{2\\sqrt{N}}^{-1}``
 """
-AnisotropicStrategy(N::Integer) = AnisotropicStrategy(ones(N), 1/sqrt(2N), 1/sqrt(2*sqrt(N)))
+AnisotropicStrategy(N::Integer) = AnisotropicStrategy(ones(N), 1 / sqrt(2N), 1 / sqrt(2 * sqrt(N)))
 copy(s::AnisotropicStrategy) = AnisotropicStrategy{typeof(s.τ)}(copy(s.σ), s.τ₀, s.τ)

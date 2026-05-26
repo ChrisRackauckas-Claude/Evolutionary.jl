@@ -14,7 +14,7 @@ The constructor takes following keyword arguments:
 - `selection`: the selection strategy `:plus` or `:comma` (default: `:plus`)
 - `metrics` is a collection of convergence metrics.
 """
-struct ES{T1,T2,T3,T4} <: AbstractOptimizer
+struct ES{T1, T2, T3, T4} <: AbstractOptimizer
     initStrategy::AbstractStrategy
     recombination::T1
     srecombination::T2
@@ -26,7 +26,8 @@ struct ES{T1,T2,T3,T4} <: AbstractOptimizer
     selection::Symbol
     metrics::ConvergenceMetrics
 
-    ES(; initStrategy::AbstractStrategy = NoStrategy(),
+    ES(;
+        initStrategy::AbstractStrategy = NoStrategy(),
         recombination::T1 = first,
         srecombination::T2 = first,
         mutation::T3 = nop,
@@ -38,17 +39,19 @@ struct ES{T1,T2,T3,T4} <: AbstractOptimizer
         λ::Integer = 1,
         lambda::Integer = λ,
         selection::Symbol = :plus,
-        metrics::ConvergenceMetrics=ConvergenceMetric[AbsDiff(1e-10)]
-       ) where {T1,T2,T3,T4} =
-         new{T1,T2,T3,T4}(initStrategy, recombination, srecombination, mutation,
-                          smutation, mu, rho, lambda, selection, metrics)
+        metrics::ConvergenceMetrics = ConvergenceMetric[AbsDiff(1.0e-10)]
+    ) where {T1, T2, T3, T4} =
+        new{T1, T2, T3, T4}(
+        initStrategy, recombination, srecombination, mutation,
+        smutation, mu, rho, lambda, selection, metrics
+    )
 end
 population_size(method::ES) = method.μ
-default_options(method::ES) = (iterations=1000,)
+default_options(method::ES) = (iterations = 1000,)
 summary(m::ES) = "($(m.μ)/$(m.ρ)$(m.selection == :plus ? '+' : ',')$(m.λ))-ES"
-show(io::IO,m::ES) = print(io, summary(m))
+show(io::IO, m::ES) = print(io, summary(m))
 
-mutable struct ESState{T,IT,ST} <: AbstractOptimizerState
+mutable struct ESState{T, IT, ST} <: AbstractOptimizerState
     N::Int
     fitness::Vector{T}
     strategies::Vector{ST}
@@ -76,7 +79,7 @@ function initial_state(method::ES, options, objfun, population)
 end
 
 function update_state!(objfun, constraints, state, population::AbstractVector{IT}, method::ES, options, itr) where {IT}
-    @unpack initStrategy,recombination,srecombination,mutation,smutation,μ,ρ,λ,selection = method
+    @unpack initStrategy, recombination, srecombination, mutation, smutation, μ, ρ, λ, selection = method
     evaltype = options.parallelization
     rng = options.rng
 
@@ -97,15 +100,15 @@ function update_state!(objfun, constraints, state, population::AbstractVector{IT
         else
             idx = randperm(rng, μ)[1:ρ]
             recombinantStrategy = srecombination(state.strategies[idx])
-            recombinant = recombination(population[idx]; rng=rng)
+            recombinant = recombination(population[idx]; rng = rng)
         end
 
         # Mutate the strategy parameter set of the recombinant
-        stgoff[i] = smutation(recombinantStrategy; rng=rng)
+        stgoff[i] = smutation(recombinantStrategy; rng = rng)
 
         # Mutate the objective parameter set of the recombinant using the mutated strategy parameter set
         # to control the statistical properties of the object parameter mutation
-        off = mutation(recombinant, stgoff[i]; rng=rng)
+        off = mutation(recombinant, stgoff[i]; rng = rng)
 
         # Apply constraints
         offspring[i] = apply!(constraints, off)
@@ -117,8 +120,8 @@ function update_state!(objfun, constraints, state, population::AbstractVector{IT
     # Select new parent population
     if selection == :plus
         idxs = sortperm(vcat(state.fitness, fitoff))[1:μ]
-        skip = idxs[idxs.<=μ]
-        for i = 1:μ
+        skip = idxs[idxs .<= μ]
+        for i in 1:μ
             if idxs[i] ∉ skip
                 ii = idxs[i] - μ
                 population[i] = offspring[ii]
@@ -128,7 +131,7 @@ function update_state!(objfun, constraints, state, population::AbstractVector{IT
         end
     else
         idxs = sortperm(fitoff)[1:μ]
-        for (i,j) in enumerate(idxs)
+        for (i, j) in enumerate(idxs)
             population[i] = offspring[j]
             state.strategies[i] = stgoff[j]
             state.fitness[i] = fitoff[j]
@@ -140,4 +143,3 @@ function update_state!(objfun, constraints, state, population::AbstractVector{IT
 
     return false
 end
-

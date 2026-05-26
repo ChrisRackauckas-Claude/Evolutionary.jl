@@ -11,21 +11,21 @@ The constructor takes following keyword arguments:
 - `K`: the recombination scale factor (default: 0.5*(F+1))
 - `metrics` is a collection of convergence metrics.
 """
-@kwdef struct DE{T1,T2} <: AbstractOptimizer
+@kwdef struct DE{T1, T2} <: AbstractOptimizer
     populationSize::Integer = 50
     F::Real = 0.9
     n::Integer = 1
-    K::Real = 0.5*(F+1)
+    K::Real = 0.5 * (F + 1)
     selection::T1 = random
     recombination::T2 = BINX(0.5)
-    metrics::ConvergenceMetrics = ConvergenceMetric[AbsDiff(1e-10)]
+    metrics::ConvergenceMetrics = ConvergenceMetric[AbsDiff(1.0e-10)]
 end
 population_size(method::DE) = method.populationSize
-default_options(method::DE) = (iterations=1000,)
+default_options(method::DE) = (iterations = 1000,)
 summary(m::DE) = "DE/$(m.selection)/$(m.n)/$(m.recombination)"
-show(io::IO,m::DE) = print(io, summary(m))
+show(io::IO, m::DE) = print(io, summary(m))
 
-mutable struct DEState{T,IT} <: AbstractOptimizerState
+mutable struct DEState{T, IT} <: AbstractOptimizerState
     N::Int
     fitness::Vector{T}
     offitness::Vector{T}
@@ -57,19 +57,19 @@ function update_state!(objfun, constraints, state, population::AbstractVector{IT
     offspring = Array{IT}(undef, Np)
 
     # select base vectors
-    bases = method.selection(state.fitness, Np, rng=rng)
+    bases = method.selection(state.fitness, Np, rng = rng)
 
     # select target vectors
-    for (i,b) in enumerate(bases)
+    for (i, b) in enumerate(bases)
         base = population[b]
         offspring[i] = copy(base)
 
         # mutation
-        targets = randexcl(rng, 1:Np, [i], 2*n)
-        offspring[i] = differentiation(offspring[i], @view population[targets]; F=F)
+        targets = randexcl(rng, 1:Np, [i], 2 * n)
+        offspring[i] = differentiation(offspring[i], @view population[targets]; F = F)
 
         # recombination
-        offspring[i], _ = method.recombination(offspring[i], base, rng=rng)
+        offspring[i], _ = method.recombination(offspring[i], base, rng = rng)
 
         # apply constraints
         apply!(constraints, offspring[i])

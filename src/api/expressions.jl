@@ -3,11 +3,11 @@ Julia expression wrapper
 """
 struct Expression
     expr::Expr
-    syms::Dict{Symbol,Int}
+    syms::Dict{Symbol, Int}
 end
 function Expression(ex::Expr)
-    syms = Dict( s=>i for (i,s) in pairs(sort!(symbols(ex))) )
-    Expression(ex, syms)
+    syms = Dict(s => i for (i, s) in pairs(sort!(symbols(ex))))
+    return Expression(ex, syms)
 end
 show(io::IO, e::Expression) = infix(io, e.expr)
 (e::Expression)(vals::T...) where {T} = evaluate(e.expr, e.syms, vals...)
@@ -18,23 +18,23 @@ function symbols(ex::Expr)
         isa(e, Symbol) && push!(syms, e)
         isa(e, Expr) && append!(syms, symbols(e))
     end
-    unique!(syms)
+    return unique!(syms)
 end
 
 function compile(ex::Expr, params::Vector{Symbol})
     tprm = Expr(:tuple, params...)
-    Expr(:->, tprm, ex)
+    return Expr(:->, tprm, ex)
 end
 
-height(ex) = isa(ex, Expr) ? maximum( height(e) for e in ex.args )+1 : 0
-nodes(ex) = !isa(ex, Expr) ? 1 : length(ex.args) > 0 ? sum( nodes(e) for e in ex.args ) : 0
+height(ex) = isa(ex, Expr) ? maximum(height(e) for e in ex.args) + 1 : 0
+nodes(ex) = !isa(ex, Expr) ? 1 : length(ex.args) > 0 ? sum(nodes(e) for e in ex.args) : 0
 length(ex) = nodes(ex)
 
-function depth(root, ex; d=0)
+function depth(root, ex; d = 0)
     return if root == ex
         d
     elseif isa(root, Expr)
-        maximum( depth(e, ex, d=d+1) for e in root.args )
+        maximum(depth(e, ex, d = d + 1) for e in root.args)
     else
         -1
     end
@@ -43,40 +43,40 @@ end
 function copyto!(dst::Expr, src::Expr)
     dst.head = src.head
     dst.args = deepcopy(src.args)
-    dst
+    return dst
 end
 
 function randsubexpr(ex)
     !isa(ex, Expr) && return ex
     csize = map(nodes, ex.args[2:end])
-    cidx = rand(1:sum(csize)+1)-1
-    if cidx == 0
+    cidx = rand(1:(sum(csize) + 1)) - 1
+    return if cidx == 0
         ex
     else
-        nidx = findfirst(i->cidx<=i, cumsum(csize))
-        randsubexpr(ex.args[nidx+1])
+        nidx = findfirst(i -> cidx <= i, cumsum(csize))
+        randsubexpr(ex.args[nidx + 1])
     end
 end
 
 function getindex(ex::Expr, idx::Int)
-    if idx == 0
+    return if idx == 0
         ex
     else
         csize = cumsum(map(nodes, ex.args[2:end]))
-        nidx = findfirst(i->i>=idx, csize)
-        nex = ex.args[nidx+1]
-        !isa(nex, Expr) ? nex : nex[csize[nidx]-idx]
+        nidx = findfirst(i -> i >= idx, csize)
+        nex = ex.args[nidx + 1]
+        !isa(nex, Expr) ? nex : nex[csize[nidx] - idx]
     end
 end
 
 function setindex!(ex::Expr, subex, idx::Int)
     csize = cumsum(map(nodes, ex.args[2:end]))
-    nidx = findfirst(i->i>=idx, csize)
-    nex = ex.args[nidx+1]
-    if !isa(nex, Expr) || csize[nidx]-idx == 0
-        ex.args[nidx+1] = subex
+    nidx = findfirst(i -> i >= idx, csize)
+    nex = ex.args[nidx + 1]
+    return if !isa(nex, Expr) || csize[nidx] - idx == 0
+        ex.args[nidx + 1] = subex
     else
-        nex[csize[nidx]-idx] = subex
+        nex[csize[nidx] - idx] = subex
     end
 end
 
@@ -89,10 +89,10 @@ issym(ex) = isa(ex, Symbol)
 isexprsym(ex) = isexpr(ex) || issym(ex)
 isbinexpr(ex) = isexpr(ex) && length(ex.args) == 3
 
-function evaluate(ex::Expr, psyms::Dict{Symbol,Int}, vals::T...)::T where {T}
+function evaluate(ex::Expr, psyms::Dict{Symbol, Int}, vals::T...)::T where {T}
     exprm = ex.args
     exvals = (isexpr(nex) || issym(nex) ? evaluate(nex, psyms, vals...) : nex for nex in exprm[2:end])
-    try
+    return try
         exprm[1](exvals...)
     catch err
         @error "Incorrect expression" ex psyms vals
@@ -100,7 +100,7 @@ function evaluate(ex::Expr, psyms::Dict{Symbol,Int}, vals::T...)::T where {T}
     end
 end
 
-function evaluate(ex::Symbol, psyms::Dict{Symbol,Int}, vals::T...)::T where {T}
+function evaluate(ex::Symbol, psyms::Dict{Symbol, Int}, vals::T...)::T where {T}
     pidx = get(psyms, ex, 0)
     if pidx == 0
         @error "Undefined symbol: $ex"
@@ -147,11 +147,11 @@ function simplifybinary!(root)
         if fn == (+) && fn2 == (-) && isnum(op12)
             # (x-m)+n = x+(n-m)
             root.args[2] = op11
-            root.args[3] = op2-op12
+            root.args[3] = op2 - op12
         elseif fn == (-) && fn2 == (-) && isnum(op12)
             # (x-m)-n = x-(n+m)
             root.args[2] = op11
-            root.args[3] = op12+op2
+            root.args[3] = op12 + op2
         elseif fn2 == (+) && (isnum(op11) || isnum(op12))
             # (m+x)±n = (x+m)±n = x+(n±m)
             var, n2 = isnum(op11) ? (op12, op11) : (op11, op12)
@@ -282,15 +282,15 @@ function contains(ex::Expr, sym::Symbol)
 end
 
 # Construct infix string from an exporession
-function infix(io::IO, root; digits=3)
-    if isa(root, Number)
-        print(io, round(root, digits=digits))
+function infix(io::IO, root; digits = 3)
+    return if isa(root, Number)
+        print(io, round(root, digits = digits))
     elseif isa(root, Expr) && root.head == :call
         if root.args[1] ∈ [+, -, *, /, ^]
             print(io, "(")
             infix(io, root.args[2])
             infix(io, root.args[1])
-            length(root.args)>2 && infix(io, root.args[3])
+            length(root.args) > 2 && infix(io, root.args[3])
             print(io, ")")
         else
             infix(io, root.args[1])
@@ -307,37 +307,36 @@ function infix(io::IO, root; digits=3)
 end
 show(io::IO, ::MIME"text/html", e::Expression) = infix(io, e.expr)
 
-latex(io::IO, root::Number; digits=3) = print(io, round(root, digits=digits))
+latex(io::IO, root::Number; digits = 3) = print(io, round(root, digits = digits))
 latex(io::IO, root::Symbol; kwargs...) = print(io, root)
-function latex(io::IO, root::Expr; digits=3)
+function latex(io::IO, root::Expr; digits = 3)
     root.head != :call && print(io, expr)
-    if root.args[1] == (/)
+    return if root.args[1] == (/)
         print(io, "\\frac{")
-        latex(io, root.args[2], digits=digits)
+        latex(io, root.args[2], digits = digits)
         print(io, "}{")
-        latex(io, root.args[3], digits=digits)
+        latex(io, root.args[3], digits = digits)
         print(io, "}")
     elseif root.args[1] ∈ [+, -, *]
         print(io, "\\left(")
-        latex(io, root.args[2], digits=digits)
+        latex(io, root.args[2], digits = digits)
         print(io, root.args[1])
-        latex(io, root.args[3], digits=digits)
+        latex(io, root.args[3], digits = digits)
         print(io, "\\right)")
     elseif root.args[1] == (^)
         print(io, "{")
-        latex(io, root.args[2], digits=digits)
+        latex(io, root.args[2], digits = digits)
         print(io, "}^{")
-        latex(io, root.args[3], digits=digits)
+        latex(io, root.args[3], digits = digits)
         print(io, "}")
     else
         print(io, "\\")
         print(io, root.args[1])
         print(io, "\\left(")
         for ex in root.args[2:end]
-            latex(io, ex, digits=digits)
+            latex(io, ex, digits = digits)
         end
         print(io, "\\right)")
     end
 end
 show(io::IO, ::MIME"text/latex", e::Expression) = latex(io, e.expr)
-

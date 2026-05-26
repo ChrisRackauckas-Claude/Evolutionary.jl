@@ -8,20 +8,19 @@
     Y = X * A + E
     r = 0.1
 
-    linear(w) = sum(abs2, Y .- X*w)
-    ridge(w) = linear(w) + r*sum(abs2, w)
-    ridgevec(w) = ridge(reshape(w,n,n2))
+    linear(w) = sum(abs2, Y .- X * w)
+    ridge(w) = linear(w) + r * sum(abs2, w)
+    ridgevec(w) = ridge(reshape(w, n, n2))
 
     # using vector individual
-    opts = Evolutionary.Options(rng=rng)
-    result = Evolutionary.optimize(ridgevec, randn(rng, n*n2), CMAES(μ=100, c_1=0.05), opts)
-    @test sum(abs, inv(X'X + r * I)*X'*Y .- reshape(Evolutionary.minimizer(result), n, n2)) ≈ 0.001 atol=1e-3
+    opts = Evolutionary.Options(rng = rng)
+    result = Evolutionary.optimize(ridgevec, randn(rng, n * n2), CMAES(μ = 100, c_1 = 0.05), opts)
+    @test sum(abs, inv(X'X + r * I) * X' * Y .- reshape(Evolutionary.minimizer(result), n, n2)) ≈ 0.001 atol = 1.0e-3
 
     # using matrix individual
-    res1 = Evolutionary.optimize(linear, randn(n,n2), CMAES(μ=100, c_1=0.05), opts)
-    res2 = Evolutionary.optimize(ridge, randn(n,n2), CMAES(μ=100, c_1=0.05), opts)
-    @test sum(abs, inv(X'X )*X'*Y .- Evolutionary.minimizer(res1)) ≈ 0.001 atol=1e-3
-    @test sum(abs, inv(X'X + r * I)*X'*Y .- Evolutionary.minimizer(res2)) ≈ 0.001 atol=1e-3
+    res1 = Evolutionary.optimize(linear, randn(n, n2), CMAES(μ = 100, c_1 = 0.05), opts)
+    res2 = Evolutionary.optimize(ridge, randn(n, n2), CMAES(μ = 100, c_1 = 0.05), opts)
+    @test sum(abs, inv(X'X) * X' * Y .- Evolutionary.minimizer(res1)) ≈ 0.001 atol = 1.0e-3
+    @test sum(abs, inv(X'X + r * I) * X' * Y .- Evolutionary.minimizer(res2)) ≈ 0.001 atol = 1.0e-3
 
 end
-

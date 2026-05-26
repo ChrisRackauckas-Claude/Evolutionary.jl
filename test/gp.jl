@@ -3,9 +3,9 @@
 
     pop = 10
     terms = Terminal[:x, :y, rand]
-    funcs = Function[+,-,*,/]
+    funcs = Function[+, -, *, /]
 
-    t = TreeGP(pop, terms, funcs, maxdepth=2)
+    t = TreeGP(pop, terms, funcs, maxdepth = 2)
     @test Evolutionary.population_size(t) == pop
     @test sort(Evolutionary.terminals(t)) == [:x, :y]
     @testset for (term, dim) in t.terminals
@@ -17,33 +17,33 @@
     show(IOBuffer(), t)
 
     # population initialization
-    popexp = Evolutionary.initial_population(t, rng=rng);
+    popexp = Evolutionary.initial_population(t, rng = rng)
     @test length(popexp) == pop
-    popexp = Evolutionary.initial_population(t, :(x + 1));
+    popexp = Evolutionary.initial_population(t, :(x + 1))
     @test popexp[1] == :(x + 1)
 
     # recursive helper functions
     h = 4
-    gtr = TreeGP(pop, terms, funcs, maxdepth=2, initialization=:grow)
+    gtr = TreeGP(pop, terms, funcs, maxdepth = 2, initialization = :grow)
     Random.seed!(rng, 8237463746)
     tmp = rand(rng, gtr, h)
     Random.seed!(rng, 8237463746)
     gt = rand(rng, gtr, h)
     @test tmp == gt
-    @test Evolutionary.nodes(gt) < 2^(h+1)-1
+    @test Evolutionary.nodes(gt) < 2^(h + 1) - 1
     @test Evolutionary.height(gt) <= h
-    @test length(gt) < 2^(h+1)-1
-    ft = rand(rng, TreeGP(pop, terms, funcs, maxdepth=2, initialization=:full), h)
-    @test Evolutionary.nodes(ft) == 2^(h+1)-1
+    @test length(gt) < 2^(h + 1) - 1
+    ft = rand(rng, TreeGP(pop, terms, funcs, maxdepth = 2, initialization = :full), h)
+    @test Evolutionary.nodes(ft) == 2^(h + 1) - 1
     @test Evolutionary.height(ft) == h
-    @test length(ft) == 2^(h+1)-1
+    @test length(ft) == 2^(h + 1) - 1
     @test Evolutionary.depth(ft, :x) == 4
     ft[3] = :z
     @test Evolutionary.depth(ft, :z) == 4
     @test Evolutionary.depth(ft, ft) == 0
     @test Evolutionary.depth(ft, ft[3]) > 0
     @test Evolutionary.depth(ft, :w) == -1
-    @test Evolutionary.evaluate(:y, Dict(:y=>1, :z=>2), 1.0, 2.0) == 1.0
+    @test Evolutionary.evaluate(:y, Dict(:y => 1, :z => 2), 1.0, 2.0) == 1.0
     copyto!(ft, gt)
     @test ft == gt
     @test Evolutionary.symbols(ft) |> sort == [:x, :y]
@@ -55,7 +55,7 @@
     @test Expr(:call, *, 0, :x) |> simplify! == 0
     @test Expr(:call, *, :x, 0) |> simplify! == 0
     @test Expr(:call, /, 0, :x) |> simplify! == 0
-    @test Expr(:call, /, 0,  1) |> simplify! == 0
+    @test Expr(:call, /, 0, 1) |> simplify! == 0
     @test Expr(:call, +, 0, :x) |> simplify! == :x
     @test Expr(:call, +, :x, 0) |> simplify! == :x
     @test Expr(:call, -, :x, 0) |> simplify! == :x
@@ -67,7 +67,7 @@
     @test Expr(:call, -, Expr(:call, +, 1, :x), 2) |> simplify! == Expr(:call, +, :x, -1)
     @test Expr(:call, +, Expr(:call, +, :x, 1), 2) |> simplify! == Expr(:call, +, :x, 3)
     @test Expr(:call, +, Expr(:call, +, 1, :x), 2) |> simplify! == Expr(:call, +, :x, 3)
-    @test Expr(:call, +, Expr(:call, -, 1, :x), 2) |> simplify! == Expr(:call, -,  3, :x)
+    @test Expr(:call, +, Expr(:call, -, 1, :x), 2) |> simplify! == Expr(:call, -, 3, :x)
     @test Expr(:call, -, Expr(:call, -, 1, :x), 2) |> simplify! == Expr(:call, -, -1, :x)
     @test Expr(:call, +, Expr(:call, -, :x, 1), 2) |> simplify! == Expr(:call, +, :x, 1)
     @test Expr(:call, -, Expr(:call, -, :x, 1), 2) |> simplify! == Expr(:call, -, :x, 3)
@@ -90,8 +90,8 @@
     # evaluation
     ex = Expr(:call, +, 1, :x) |> Evolutionary.Expression
     xs = rand(rng, 10)
-    @test ex(xs[1]) == xs[1]+1
-    @test ex.(xs) == xs.+1
+    @test ex(xs[1]) == xs[1] + 1
+    @test ex.(xs) == xs .+ 1
     io = IOBuffer()
     show(io, "text/latex", ex)
     @test String(take!(io)) == "\\left(1.0+x\\right)"
@@ -99,39 +99,40 @@
     @test String(take!(io)) == "(1.0+x)"
 
     # protected operations
-    @test Evolutionary.pdiv(1,0) == 1e7+1
-    @test Evolutionary.aq(1,0) == 1.0
-    @test Evolutionary.pexp(40) == 1e16+40
-    @test Evolutionary.plog(0) == -1e7
-    @test Evolutionary.psin(Inf) == 1e7
-    @test Evolutionary.pcos(Inf) == 1e7
-    @test Evolutionary.ppow(10,20) == 1e7+30
-    @test Evolutionary.ppow(-4,0.5) == 2.0
-    @test Evolutionary.ppow(2,2) == 4.0
-    @test Evolutionary.cond(3,1,2) == 1
-    @test Evolutionary.cond(-3,1,2) == 2
+    @test Evolutionary.pdiv(1, 0) == 1.0e7 + 1
+    @test Evolutionary.aq(1, 0) == 1.0
+    @test Evolutionary.pexp(40) == 1.0e16 + 40
+    @test Evolutionary.plog(0) == -1.0e7
+    @test Evolutionary.psin(Inf) == 1.0e7
+    @test Evolutionary.pcos(Inf) == 1.0e7
+    @test Evolutionary.ppow(10, 20) == 1.0e7 + 30
+    @test Evolutionary.ppow(-4, 0.5) == 2.0
+    @test Evolutionary.ppow(2, 2) == 4.0
+    @test Evolutionary.cond(3, 1, 2) == 1
+    @test Evolutionary.cond(-3, 1, 2) == 2
 
     # symreg
-    fitfun(x) = x*x + x + 1.0
+    fitfun(x) = x * x + x + 1.0
     rg = -5.0:0.1:5.0
     ys = fitfun.(rg)
     function fitobj(expr)
         ex = Evolutionary.Expression(expr)
         yy = ex.(rg)
-        sum(v->isnan(v) ? 1.0 : v, abs2.(ys .- yy) )/length(rg)
+        sum(v -> isnan(v) ? 1.0 : v, abs2.(ys .- yy)) / length(rg)
     end
 
     Random.seed!(rng, 6)
-    res = Evolutionary.optimize(fitobj,
-        TreeGP(50, Terminal[:x, randn], Function[+,-,*,Evolutionary.aq],
-            mindepth=1,
-            maxdepth=3,
+    res = Evolutionary.optimize(
+        fitobj,
+        TreeGP(
+            50, Terminal[:x, randn], Function[+, -, *, Evolutionary.aq],
+            mindepth = 1,
+            maxdepth = 3,
             simplify = Evolutionary.simplify!,
             selection = tournament(3),
         ),
-        Evolutionary.Options(show_trace=false, rng=rng, iterations=50)
-    );
+        Evolutionary.Options(show_trace = false, rng = rng, iterations = 50)
+    )
     @test minimum(res) < 1.5
 
 end
-

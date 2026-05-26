@@ -73,7 +73,7 @@ relchange(r::OptimizationResults) = error("`relchange` is not implemented for $(
 """
 Evolutionary optimization result type
 """
-mutable struct EvolutionaryOptimizationResults{O<:AbstractOptimizer, Tx, Tf} <: OptimizationResults
+mutable struct EvolutionaryOptimizationResults{O <: AbstractOptimizer, Tx, Tf} <: OptimizationResults
     method::O
     minimizer::Tx
     minimum::Tf
@@ -120,12 +120,12 @@ function show(io::IO, r::EvolutionaryOptimizationResults)
         if nx >= 4
             push!(str_x_elements, " ...")
         end
-        print(io, "    Minimizer:  [", join(str_x_elements, ", "),  "]\n")
+        print(io, "    Minimizer:  [", join(str_x_elements, ", "), "]\n")
     else
         print(io, "    Minimizer:  $mzr\n")
     end
     !is_moo(r) && print(io, "    Minimum:    $(minimum(r))\n")
-    print(io, "    Iterations:", rpad(" ",is_moo(r) ? 3 : 0), "$(iterations(r))\n")
+    print(io, "    Iterations:", rpad(" ", is_moo(r) ? 3 : 0), "$(iterations(r))\n")
     print(io, "\n")
     print(io, " * Found with\n")
     print(io, "    Algorithm: $(summary(r))\n")
@@ -138,16 +138,15 @@ function show(io::IO, r::EvolutionaryOptimizationResults)
             sgn = converged(cm) ? "≤" : "≰"
             dsc = description(cm)
             lpd = " "^(maxdsclen + 1 - length(dsc))
-            print(io, "$rpd$dsc$lpd= $(diff(cm)) $sgn $(tolerance(cm))\n" )
+            print(io, "$rpd$dsc$lpd= $(diff(cm)) $sgn $(tolerance(cm))\n")
         end
         print(io, "\n")
     end
     print(io, " * Work counters\n")
-    tr = round(time_run(r); digits=4)
-    tl = isnan(time_limit(r)) ? Inf : round(time_limit(r); digits=4)
+    tr = round(time_run(r); digits = 4)
+    tl = isnan(time_limit(r)) ? Inf : round(time_limit(r); digits = 4)
     print(io, "    Seconds run:   $tr (vs limit $tl)\n")
     print(io, "    Iterations:    $(iterations(r))\n")
     print(io, "    f(x) calls:    $(f_calls(r))\n")
     return
 end
-

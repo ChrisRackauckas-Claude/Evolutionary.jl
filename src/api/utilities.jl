@@ -2,11 +2,13 @@
 # TRACE #
 #########
 
-function update!(tr::OptimizationTrace{T,O}, state::S,
-                 iteration::Integer, val::T, dt::Dict,
-                 store_trace::Bool, show_trace::Bool, show_every::Int = 1,
-                 callback = nothing) where {S<:AbstractOptimizerState, T, O}
-    os = OptimizationTraceRecord{T,O}(iteration, val, dt)
+function update!(
+        tr::OptimizationTrace{T, O}, state::S,
+        iteration::Integer, val::T, dt::Dict,
+        store_trace::Bool, show_trace::Bool, show_every::Int = 1,
+        callback = nothing
+    ) where {S <: AbstractOptimizerState, T, O}
+    os = OptimizationTraceRecord{T, O}(iteration, val, dt)
     store_trace && push!(tr, os)
     if show_trace
         if iteration % show_every == 0
@@ -24,23 +26,25 @@ function update!(tr::OptimizationTrace{T,O}, state::S,
     else
         stopped = false
     end
-    stopped
+    return stopped
 end
 
-function trace!(tr, iteration, objfun, state, population, method, options, curr_time=time())
-    dt = Dict{String,Any}()
+function trace!(tr, iteration, objfun, state, population, method, options, curr_time = time())
+    dt = Dict{String, Any}()
     dt["time"] = curr_time
     # set additional trace value
     trace!(dt, objfun, state, population, method, options)
-    update!(tr,
-            state,
-            iteration,
-            value(state),
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
+    return update!(
+        tr,
+        state,
+        iteration,
+        value(state),
+        dt,
+        options.store_trace,
+        options.show_trace,
+        options.show_every,
+        options.callback
+    )
 end
 
 """
@@ -48,7 +52,7 @@ end
 
 Update the trace `record`. This function allows to supplement an additional information into the optimization algorithm trace by modifying a trace `record`. It can be overridden by specifying particular parameter types.
 """
-trace!(record::Dict{String,Any}, objfun, state, population, method, options) = ()
+trace!(record::Dict{String, Any}, objfun, state, population, method, options) = ()
 
 
 ##############
@@ -60,7 +64,7 @@ trace!(record::Dict{String,Any}, objfun, state, population, method, options) = (
 
 Initialize population by replicating the `individual` vector.
 """
-initial_population(method::M, individual::I; kwargs...) where {M<:AbstractOptimizer, I<:AbstractVector} =
+initial_population(method::M, individual::I; kwargs...) where {M <: AbstractOptimizer, I <: AbstractVector} =
     [copy(individual) for i in 1:population_size(method)]
 
 """
@@ -68,10 +72,10 @@ initial_population(method::M, individual::I; kwargs...) where {M<:AbstractOptimi
 
 Initialize population from the collection of `individuals` vectors.
 """
-function initial_population(method::M, individuals::AbstractVector{I}; kwargs...) where {M<:AbstractOptimizer, I<:AbstractVector}
+function initial_population(method::M, individuals::AbstractVector{I}; kwargs...) where {M <: AbstractOptimizer, I <: AbstractVector}
     n = population_size(method)
-    @assert length(individuals) ==  n "Size of initial population must be $n"
-    individuals
+    @assert length(individuals) == n "Size of initial population must be $n"
+    return individuals
 end
 
 """
@@ -79,7 +83,7 @@ end
 
 Initialize population from the `individual` function which returns an individual object.
 """
-initial_population(method::M, individualFunc::Function; kwargs...) where {M<:AbstractOptimizer} =
+initial_population(method::M, individualFunc::Function; kwargs...) where {M <: AbstractOptimizer} =
     [individualFunc() for i in 1:population_size(method)]
 
 """
@@ -87,8 +91,8 @@ initial_population(method::M, individualFunc::Function; kwargs...) where {M<:Abs
 
 Initialize population by replicating the `individual` matrix.
 """
-function initial_population(method::M, individual::I; kwargs...) where {M<:AbstractOptimizer, I<:AbstractMatrix}
-    [copy(individual) for i in 1:population_size(method)]
+function initial_population(method::M, individual::I; kwargs...) where {M <: AbstractOptimizer, I <: AbstractMatrix}
+    return [copy(individual) for i in 1:population_size(method)]
 end
 
 """
@@ -96,30 +100,31 @@ end
 
 Initialize a random population within the individual `bounds`.
 """
-function initial_population(method::M, bounds::ConstraintBounds;
-                            rng::AbstractRNG=default_rng()
-                           ) where {M<:AbstractOptimizer}
+function initial_population(
+        method::M, bounds::ConstraintBounds;
+        rng::AbstractRNG = default_rng()
+    ) where {M <: AbstractOptimizer}
     n = population_size(method)
     cn = nconstraints_x(bounds)
     indv = rand(rng, cn, n)
     if length(bounds.eqx) > 0
-        indv[bounds.eqx,:] .= bounds.valx
+        indv[bounds.eqx, :] .= bounds.valx
     end
     T = eltype(bounds)
-    rngs = Dict(i=>zeros(T,2) for i in bounds.ineqx)
-    for (j,v,s) in zip(bounds.ineqx, bounds.bx, bounds.σx)
-        rngs[j][1] -= s*v
+    rngs = Dict(i => zeros(T, 2) for i in bounds.ineqx)
+    for (j, v, s) in zip(bounds.ineqx, bounds.bx, bounds.σx)
+        rngs[j][1] -= s * v
         if s > 0
             rngs[j][2] += v
         end
     end
     for i in 1:n
-        for (j,(r,l)) in rngs
-            indv[j,i] *= r
-            indv[j,i] += l
+        for (j, (r, l)) in rngs
+            indv[j, i] *= r
+            indv[j, i] += l
         end
     end
-    initial_population(method,  [collect(i) for i in  eachcol(indv)])
+    return initial_population(method, [collect(i) for i in eachcol(indv)])
 end
 
 
@@ -128,7 +133,7 @@ end
 ########
 
 default_values(x::AbstractArray{T}) where {T} = fill!(similar(x), zero(T))
-default_values(x::AbstractArray{T}) where {T<:AbstractFloat} = fill!(similar(x), T(NaN))
+default_values(x::AbstractArray{T}) where {T <: AbstractFloat} = fill!(similar(x), T(NaN))
 
 function funargnum(f)
     fobj = try
@@ -136,6 +141,5 @@ function funargnum(f)
     catch
         @error "Cannot find function $f"
     end
-    fobj.nargs
+    return fobj.nargs
 end
-

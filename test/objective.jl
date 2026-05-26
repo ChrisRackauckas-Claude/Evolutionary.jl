@@ -12,7 +12,7 @@
     @test eltype(v) == Bool
     @test iszero(v)
 
-    v = Evolutionary.default_values(ones(Int,2, 3))
+    v = Evolutionary.default_values(ones(Int, 2, 3))
     @test eltype(v) == Int
     @test iszero(v)
 
@@ -20,7 +20,7 @@
     objfun = EvolutionaryObjective(f1, [1; 2; 3; 4])
     @test typeof(objfun.F) == Int
     @test eltype(objfun.x_f) == Int
-    f2(x) = sum(x)/length(x)
+    f2(x) = sum(x) / length(x)
     objfun = EvolutionaryObjective(f2, [1; 2; 3; 4])
     @test typeof(objfun.F) == Float64
     @test eltype(objfun.x_f) == Int
@@ -35,7 +35,7 @@
     @test typeof(objfun.F) == Int
     @test typeof(objfun.x_f) == Expr
 
-    f4(x) = x[1]+x[2]
+    f4(x) = x[1] + x[2]
     x = zeros(2)
     objfun = EvolutionaryObjective(f4, x)
     @test objfun.F isa Float64
@@ -64,12 +64,12 @@
     @test all(iszero.(objfun.x_f))
 
     function f5(F, x)
-        F[1] = x[1]+1
-        F[2] = x[2]+2
+        F[1] = x[1] + 1
+        F[2] = x[2] + 2
         F
     end
     objfun = EvolutionaryObjective(f5, x, copy(x))
-    @test objfun.F   isa Vector{Float64}
+    @test objfun.F isa Vector{Float64}
     @test objfun.x_f isa Vector{Float64}
     @test ismultiobjective(objfun)
     @test_throws MethodError value(objfun, ones(Int, 2))
@@ -103,7 +103,7 @@
     @test objfun.F == v
     @test iszero(objfun.x_f)
 
-    f6(x) = [x[1], x[2]+1]
+    f6(x) = [x[1], x[2] + 1]
     x = zeros(2)
     objfun = EvolutionaryObjective(f6, x)
     v = value(objfun, ones(2))
@@ -121,20 +121,20 @@
     X = [ones(2) for i in 1:10]
     F = zeros(10)
     objfun = EvolutionaryObjective(f4, x)
-    V = value!(objfun, F, X);
+    V = value!(objfun, F, X)
     @test F == 2ones(10)
 
-    objfun = EvolutionaryObjective(f4, x; eval=:thread)
-    V = value!(objfun, F, X);
+    objfun = EvolutionaryObjective(f4, x; eval = :thread)
+    V = value!(objfun, F, X)
     @test F == 2ones(10)
 
     objfun = EvolutionaryObjective(f5, x, zeros(2))
-    F = zeros(2,10)
+    F = zeros(2, 10)
     V = value!(objfun, F, X)
     @test F == [2ones(10) 3ones(10)]'
 
-    objfun = EvolutionaryObjective(f5, x, zeros(2); eval=:thread)
-    F = zeros(2,10)
+    objfun = EvolutionaryObjective(f5, x, zeros(2); eval = :thread)
+    F = zeros(2, 10)
     V = value!(objfun, F, X)
     @test F == [2ones(10) 3ones(10)]'
 
