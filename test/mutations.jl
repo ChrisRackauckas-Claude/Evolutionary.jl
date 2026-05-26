@@ -124,11 +124,15 @@
         end
 
         # point
+        # The invariant is length(ex) == length(mex); the original `== 7` was the
+        # length on Julia 1.10 only. Julia 1.11 changed how `rand` samples from
+        # `Dict`/`KeySet`, so `rand(rng, tr, H)` yields a different tree on 1.11+
+        # even under StableRNG.
         mut = point(tr)
         Random.seed!(rng, 1)
         @testset "Point Mutation" for i in 1:10
             mex = mut(copy(ex), rng=rng)
-            @test length(ex) == length(mex) == 7
+            @test length(ex) == length(mex)
             @test sum(x == y for (x,y) in zip(ex.args, mex.args)) >= 2
         end
 
