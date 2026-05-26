@@ -27,4 +27,4 @@ makedocs(
     ]
 )
 
-deploydocs(repo = "github.com/wildart/Evolutionary.jl.git")
+deploydocs(repo = "github.com/SciML/Evolutionary.jl.git")
