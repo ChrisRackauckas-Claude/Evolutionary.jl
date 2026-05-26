@@ -47,23 +47,23 @@ Return `true` if point `x` is feasible, given the `bounds` object with bounds `l
 
 for all possible `i`.
 """
-function isfeasible(bounds::ConstraintBounds, x::AbstractVector, c::Union{AbstractVector,Nothing}=nothing)
+function isfeasible(bounds::ConstraintBounds, x::AbstractVector, c::Union{AbstractVector, Nothing} = nothing)
     isf = true
-    for (i,j) in enumerate(bounds.eqx)
+    for (i, j) in enumerate(bounds.eqx)
         isf &= x[j] == bounds.valx[i]
     end
-    for (i,j) in enumerate(bounds.ineqx)
-        isf &= bounds.σx[i]*(x[j] - bounds.bx[i]) >= 0
+    for (i, j) in enumerate(bounds.ineqx)
+        isf &= bounds.σx[i] * (x[j] - bounds.bx[i]) >= 0
     end
     if c !== nothing
-        for (i,j) in enumerate(bounds.eqc)
+        for (i, j) in enumerate(bounds.eqc)
             isf &= c[j] == bounds.valc[i]
         end
-        for (i,j) in enumerate(bounds.ineqc)
-            isf &= bounds.σc[i]*(c[j] - bounds.bc[i]) >= 0
+        for (i, j) in enumerate(bounds.ineqc)
+            isf &= bounds.σc[i] * (c[j] - bounds.bc[i]) >= 0
         end
     end
-    isf
+    return isf
 end
 
 """
@@ -77,7 +77,7 @@ isfeasible(c::AbstractConstraints, x) = isfeasible(c.bounds, x, value(c, x))
 
 """Type for an empty set of constratins"""
 struct NoConstraints <: AbstractConstraints end
-isfeasible(c::NoConstraints, x)  = true
+isfeasible(c::NoConstraints, x) = true
 getproperty(c::NoConstraints, s::Symbol) =
     s == :bounds ? ConstraintBounds(Float64[], Float64[], Float64[], Float64[]) : nothing
 
@@ -100,7 +100,7 @@ BoxConstraints(lower::T, upper::T, size) where {T} =
     BoxConstraints(fill(lower, size), fill(upper, size))
 apply!(c::BoxConstraints, x) = clip!(c.bounds, x)
 bounds(c::BoxConstraints) = c.bounds
-function show(io::IO,c::BoxConstraints)
+function show(io::IO, c::BoxConstraints)
     print(io, "Box Constraints:")
     indent = "    "
     cb = bounds(c)
@@ -108,7 +108,7 @@ function show(io::IO,c::BoxConstraints)
         print(io, '\n', indent)
         join(io, ("x[$i]=$v" for (i, v) in zip(cb.eqx, cb.valx)), ", ")
     end
-    if !isempty(cb.ineqx)
+    return if !isempty(cb.ineqx)
         print(io, '\n', indent)
         join(io, ("x[$i]$(σ > 0 ? '≥' : '≤')$b" for (i, σ, b) in zip(cb.ineqx, cb.σx, cb.bx)), ", ")
     end
@@ -133,39 +133,45 @@ The constructor takes following arguments:
 - `uc`: a vector of constrain function upper bounds
 - `c`: a constraint function which returns a constrain values
 """
-struct PenaltyConstraints{T,F} <: AbstractConstraints
+struct PenaltyConstraints{T, F} <: AbstractConstraints
     coef::Vector{T}
     constraints::F   # constraints(x) returns the value of the constraint-functions at x
     bounds::ConstraintBounds{T}
-    PenaltyConstraints(penalty::Vector{T}, bounds::ConstraintBounds{T}, c::F) where {T,F} =
-        new{T,F}(penalty, c, bounds)
+    PenaltyConstraints(penalty::Vector{T}, bounds::ConstraintBounds{T}, c::F) where {T, F} =
+        new{T, F}(penalty, c, bounds)
 end
-PenaltyConstraints(penalty::T, bounds::ConstraintBounds{T}, cf=(x)->nothing) where {T} =
-    PenaltyConstraints(fill(penalty, nconstraints(bounds)+nconstraints_x(bounds)), bounds, cf)
-PenaltyConstraints(penalty::AbstractVector{T}, lx::AbstractVector{T}, ux::AbstractVector{T},
-                   lc::AbstractVector{T}, uc::AbstractVector{T}, cf=(x)->nothing) where {T} =
+PenaltyConstraints(penalty::T, bounds::ConstraintBounds{T}, cf = (x) -> nothing) where {T} =
+    PenaltyConstraints(fill(penalty, nconstraints(bounds) + nconstraints_x(bounds)), bounds, cf)
+PenaltyConstraints(
+    penalty::AbstractVector{T}, lx::AbstractVector{T}, ux::AbstractVector{T},
+    lc::AbstractVector{T}, uc::AbstractVector{T}, cf = (x) -> nothing
+) where {T} =
     PenaltyConstraints(penalty, ConstraintBounds(lx, ux, lc, uc), cf)
-PenaltyConstraints(penalty::T, lx::AbstractVector{T}, ux::AbstractVector{T},
-                   lc::AbstractVector{T}=T[], uc::AbstractVector{T}=T[],
-                   cf=(x)->nothing) where {T} =
+PenaltyConstraints(
+    penalty::T, lx::AbstractVector{T}, ux::AbstractVector{T},
+    lc::AbstractVector{T} = T[], uc::AbstractVector{T} = T[],
+    cf = (x) -> nothing
+) where {T} =
     PenaltyConstraints(penalty, ConstraintBounds(lx, ux, lc, uc), cf)
-PenaltyConstraints(lx::AbstractVector{T}, ux::AbstractVector{T},
-                   lc::AbstractVector{T}=T[], uc::AbstractVector{T}=T[],
-                   cf=(x)->nothing) where {T} =
+PenaltyConstraints(
+    lx::AbstractVector{T}, ux::AbstractVector{T},
+    lc::AbstractVector{T} = T[], uc::AbstractVector{T} = T[],
+    cf = (x) -> nothing
+) where {T} =
     PenaltyConstraints(one(T), ConstraintBounds(lx, ux, lc, uc), cf)
 value(c::PenaltyConstraints, x) = c.constraints(x)
 bounds(c::PenaltyConstraints) = c.bounds
 penalty(c::PenaltyConstraints, x) = penalty(c.bounds, c.coef, x, value(c, x))
-function penalty!(fitness::AbstractVector{T}, c::PenaltyConstraints{T,F}, population) where {T,F}
-    for (i,x) in enumerate(population)
+function penalty!(fitness::AbstractVector{T}, c::PenaltyConstraints{T, F}, population) where {T, F}
+    for (i, x) in enumerate(population)
         fitness[i] += penalty(c, x)
     end
     return fitness
 end
-function show(io::IO,c::PenaltyConstraints)
+function show(io::IO, c::PenaltyConstraints)
     println(io, "Penalty Constraints:")
     println(io, "  Penalties: $(c.coef)")
-    print(io, bounds(c))
+    return print(io, bounds(c))
 end
 
 """
@@ -183,42 +189,44 @@ The constructor takes following arguments:
 - `uc`: a vector of constrain function upper bounds
 - `c`: a constraint function which returns a constrain values
 """
-struct WorstFitnessConstraints{T,F} <: AbstractConstraints
+struct WorstFitnessConstraints{T, F} <: AbstractConstraints
     bounds::ConstraintBounds{T}
     constraints::F   # constraints(x) returns the value of the constraint-functions at x
 end
-WorstFitnessConstraints(lx::AbstractVector{T}, ux::AbstractVector{T}, lc::AbstractVector{T},
-                        uc::AbstractVector{T}, cf=(x)->nothing) where {T} =
+WorstFitnessConstraints(
+    lx::AbstractVector{T}, ux::AbstractVector{T}, lc::AbstractVector{T},
+    uc::AbstractVector{T}, cf = (x) -> nothing
+) where {T} =
     WorstFitnessConstraints(ConstraintBounds(lx, ux, lc, uc), cf)
 value(c::WorstFitnessConstraints, x) = c.constraints(x)
 apply!(c::WorstFitnessConstraints, x) = clip!(c.bounds, x)
 bounds(c::WorstFitnessConstraints) = c.bounds
-function penalty!(fitness::AbstractVector{T}, c::WorstFitnessConstraints{T,F}, population) where {T,F}
+function penalty!(fitness::AbstractVector{T}, c::WorstFitnessConstraints{T, F}, population) where {T, F}
     worst = maximum(fitness)
-    for (i,x) in enumerate(population)
+    for (i, x) in enumerate(population)
         cv = value(c, x)
         p = zeros(size(cv))
         if !isfeasible(c.bounds, x, cv)
-            for (i,j) in enumerate(c.bounds.eqc)
+            for (i, j) in enumerate(c.bounds.eqc)
                 p[j] = cv[j] - c.bounds.valc[i] - eps()
             end
-            for (i,j) in enumerate(c.bounds.ineqc)
-                p[j] = c.bounds.σc[i]*(c.bounds.bc[i]-cv[j])
+            for (i, j) in enumerate(c.bounds.ineqc)
+                p[j] = c.bounds.σc[i] * (c.bounds.bc[i] - cv[j])
             end
             fitness[i] = worst + sum(abs, p)
         end
     end
     return fitness
 end
-function show(io::IO,c::WorstFitnessConstraints)
+function show(io::IO, c::WorstFitnessConstraints)
     print(io, "Worst Fitness ")
-    print(io, c.bounds)
+    return print(io, c.bounds)
 end
 
 """
-This type provides an additional type constraints on the varaibles required for mixed integer optimization problmes.
+This type provides an additional type constraints on the variables required for mixed integer optimization problems.
 """
-struct MixedTypePenaltyConstraints{C<:AbstractConstraints} <: AbstractConstraints
+struct MixedTypePenaltyConstraints{C <: AbstractConstraints} <: AbstractConstraints
     penalty::C
     types::Vector{DataType}
 end
@@ -226,7 +234,7 @@ value(c::MixedTypePenaltyConstraints, x) = value(c.penalty, x)
 penalty!(fitness, c::MixedTypePenaltyConstraints, population) = penalty!(fitness, c.penalty, population)
 function apply!(c::MixedTypePenaltyConstraints, x)
     y = apply!(c.penalty, x)
-    for (i,t) in enumerate(c.types)
+    for (i, t) in enumerate(c.types)
         if t <: Integer
             y[i] = round(t, y[i])
         end
@@ -237,33 +245,35 @@ end
 # Utilities
 
 function clip!(bounds::ConstraintBounds{T}, x) where {T}
-    for (i,j) in enumerate(bounds.eqx)
+    for (i, j) in enumerate(bounds.eqx)
         x[j] = bounds.valx[i]
     end
-    for (i,j) in enumerate(bounds.ineqx)
-        if bounds.σx[i]*(x[j] - bounds.bx[i]) < 0
+    for (i, j) in enumerate(bounds.ineqx)
+        if bounds.σx[i] * (x[j] - bounds.bx[i]) < 0
             x[j] = bounds.bx[i]
         end
     end
-    x
+    return x
 end
 
-function penalty(bounds::ConstraintBounds{T}, coeff::AbstractVector{T},
-                 x, c::Union{AbstractVector{T},Nothing}=nothing) where {T}
+function penalty(
+        bounds::ConstraintBounds{T}, coeff::AbstractVector{T},
+        x, c::Union{AbstractVector{T}, Nothing} = nothing
+    ) where {T}
     penalty = 0
     xc = nconstraints_x(bounds)
-    for (i,j) in enumerate(bounds.eqx)
-        penalty += coeff[j]*(x[j] - bounds.valx[i] - eps())^2
+    for (i, j) in enumerate(bounds.eqx)
+        penalty += coeff[j] * (x[j] - bounds.valx[i] - eps())^2
     end
-    for (i,j) in enumerate(bounds.ineqx)
-        penalty += coeff[j]*max(0, bounds.σx[i]*(bounds.bx[i]-x[j]))^2
+    for (i, j) in enumerate(bounds.ineqx)
+        penalty += coeff[j] * max(0, bounds.σx[i] * (bounds.bx[i] - x[j]))^2
     end
     if c !== nothing
-        for (i,j) in enumerate(bounds.eqc)
-            penalty += coeff[xc+j]*max(0, c[j] - bounds.valc[i] - eps())^2
+        for (i, j) in enumerate(bounds.eqc)
+            penalty += coeff[xc + j] * max(0, c[j] - bounds.valc[i] - eps())^2
         end
-        for (i,j) in enumerate(bounds.ineqc)
-            penalty += coeff[xc+j]*max(0, bounds.σc[i]*(bounds.bc[i]-c[j]))^2
+        for (i, j) in enumerate(bounds.ineqc)
+            penalty += coeff[xc + j] * max(0, bounds.σc[i] * (bounds.bc[i] - c[j]))^2
         end
     end
     return penalty

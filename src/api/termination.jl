@@ -5,11 +5,11 @@
 # Utilities
 
 abschange(curr, prev) = Float64(abs(curr - prev))
-relchange(curr, prev) = Float64(abs(curr - prev)/abs(curr))
+relchange(curr, prev) = Float64(abs(curr - prev) / abs(curr))
 
 maxdiff(x::AbstractArray, y::AbstractArray) = mapreduce((a, b) -> abs(a - b), max, x, y)
-abschange(curr::T, prev) where {T<:AbstractArray} = maxdiff(curr, prev)
-relchange(curr::T, prev) where {T<:AbstractArray} = maxdiff(curr, prev)/maximum(abs, curr)
+abschange(curr::T, prev) where {T <: AbstractArray} = maxdiff(curr, prev)
+relchange(curr::T, prev) where {T <: AbstractArray} = maxdiff(curr, prev) / maximum(abs, curr)
 
 # Single value
 
@@ -29,14 +29,14 @@ mutable struct AbsDiff{T} <: ConvergenceMetric
     Δ::Float64
     value::T
 end
-AbsDiff(tol::T) where {T<:AbstractFloat} = AbsDiff(tol, Inf, zero(T))
-AbsDiff() = AbsDiff(1e-12)
+AbsDiff(tol::T) where {T <: AbstractFloat} = AbsDiff(tol, Inf, zero(T))
+AbsDiff() = AbsDiff(1.0e-12)
 description(m::AbsDiff) = "|f(x) - f(x')|"
 function assess!(m::AbsDiff, state::AbstractOptimizerState)
     val = value(state)
     m.Δ = abschange(val, m.value)
     m.value = val
-    converged(m)
+    return converged(m)
 end
 
 """
@@ -55,14 +55,14 @@ mutable struct RelDiff{T} <: ConvergenceMetric
     Δ::Float64
     value::T
 end
-RelDiff(tol::T) where {T<:AbstractFloat} = RelDiff(tol, Inf, zero(T))
-RelDiff() = RelDiff(1e-12)
+RelDiff(tol::T) where {T <: AbstractFloat} = RelDiff(tol, Inf, zero(T))
+RelDiff() = RelDiff(1.0e-12)
 description(m::RelDiff) = "|f(x) - f(x')|/|f(x')|"
 function assess!(m::RelDiff, state::AbstractOptimizerState)
     val = value(state)
     m.Δ = relchange(val, m.value)
     m.value = val
-    converged(m)
+    return converged(m)
 end
 
 
@@ -81,9 +81,9 @@ function gd(A::AbstractMatrix, R::AbstractMatrix)
     (na == 0 || nr == 0) && return Inf
     sum = 0
     for a in eachcol(A)
-        sum += minimum(norm(a-r) for r in eachcol(R))
+        sum += minimum(norm(a - r) for r in eachcol(R))
     end
-    sum/na
+    return sum / na
 end
 
 """
@@ -92,7 +92,7 @@ end
 Calculate an inverted generational distance, [`gd`](@ref), between set `S` and the reference set `R`.
 Parameters are column-major matrices.
 """
-igd(S,R) = gd(R,S)
+igd(S, R) = gd(R, S)
 
 
 """
@@ -118,17 +118,17 @@ mutable struct GD{T} <: ConvergenceMetric
     value::Matrix{T}
     inverted::Bool
 end
-GD(tol::T, inv=false) where {T<:AbstractFloat} = GD(tol, Inf, zeros(T,0,0), inv)
-GD(inv=false) = GD(1e-5, inv)
+GD(tol::T, inv = false) where {T <: AbstractFloat} = GD(tol, Inf, zeros(T, 0, 0), inv)
+GD(inv = false) = GD(1.0e-5, inv)
 function description(m::GD)
-    prefix = m.inverted ? "I" : "" 
-    "|$(prefix)GD(P) - $(prefix)GD(P')|"
+    prefix = m.inverted ? "I" : ""
+    return "|$(prefix)GD(P) - $(prefix)GD(P')|"
 end
 function assess!(m::GD, state::AbstractOptimizerState)
     val = value(state)
     m.Δ = m.inverted ? igd(val, m.value) : gd(val, m.value)
     m.value = val
-    converged(m)
+    return converged(m)
 end
 
 
@@ -138,19 +138,19 @@ end
 Returns a diversity metric of a population of set `S` to the reference set `R`.
 """
 function spread(S::AbstractMatrix, R::AbstractMatrix)
-    n = size(S,2)
-    m = size(R,2)
-    Δₖ = [ minimum(norm(view(S,:,i)-view(R,:,j)) for i in 1:n if view(S,:,i) != view(R,:,j)) for j in 1:m ]
+    n = size(S, 2)
+    m = size(R, 2)
+    Δₖ = [ minimum(norm(view(S, :, i) - view(R, :, j)) for i in 1:n if view(S, :, i) != view(R, :, j)) for j in 1:m ]
     Δ = mean(Δₖ)
-    sum(abs.(Δₖ.-Δ))/m*Δ
+    return sum(abs.(Δₖ .- Δ)) / m * Δ
 end
 
 function spread(S::AbstractMatrix)
-    n = size(S,2)
+    n = size(S, 2)
     n == 1 && return NaN
-    Δₖ = [ minimum(norm(view(S,:,i)-view(S,:,j)) for j in 1:n if view(S,:,i) != view(S,:,j)) for i in 1:n ]
+    Δₖ = [ minimum(norm(view(S, :, i) - view(S, :, j)) for j in 1:n if view(S, :, i) != view(S, :, j)) for i in 1:n ]
     Δ = mean(Δₖ)
-    sum(abs.(Δₖ.-Δ))/n*Δ
+    return sum(abs.(Δₖ .- Δ)) / n * Δ
 end
 
 ##########################
@@ -159,4 +159,3 @@ end
 
 assess_convergence(state::AbstractOptimizerState, method) =
     any(assess!(cm, state) for cm in metrics(method))
-

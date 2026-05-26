@@ -23,8 +23,8 @@ The constructor takes following keyword arguments:
 """
 @kwdef struct TreeGP <: AbstractOptimizer
     populationSize::Integer = 50
-    terminals::Dict{Terminal, Int} = Dict(:x=>1, rand=>1)
-    functions::Dict{Function, Int} = Dict(f=>2 for f in [+,-,*,pdiv])
+    terminals::Dict{Terminal, Int} = Dict(:x => 1, rand => 1)
+    functions::Dict{Function, Int} = Dict(f => 2 for f in [+, -, *, pdiv])
     mindepth::Int = 0
     maxdepth::Int = 3
     crossover::Function = crosstree
@@ -34,22 +34,22 @@ The constructor takes following keyword arguments:
     mutationRate::Real = 0.1
     initialization::Symbol = :grow
     simplify::Union{Nothing, Function} = nothing
-    metrics::ConvergenceMetrics = ConvergenceMetric[AbsDiff(1e-5)]
+    metrics::ConvergenceMetrics = ConvergenceMetric[AbsDiff(1.0e-5)]
 end
 function TreeGP(pop::Integer, term::Vector{Terminal}, func::Vector{Function}; kwargs...)
-    terminals = Dict(t=>1 for t in term)
-    functions = Dict(f=>2 for f in func)
-    TreeGP(;populationSize=pop, terminals=terminals, functions=functions, kwargs...)
+    terminals = Dict(t => 1 for t in term)
+    functions = Dict(f => 2 for f in func)
+    return TreeGP(; populationSize = pop, terminals = terminals, functions = functions, kwargs...)
 end
 
 population_size(method::TreeGP) = method.populationSize
-default_options(method::TreeGP) = (iterations=1000,)
-terminals(m::TreeGP) = Symbol[t for t in keys(m.terminals) if isa(t,Symbol)] |> sort!
+default_options(method::TreeGP) = (iterations = 1000,)
+terminals(m::TreeGP) = Symbol[t for t in keys(m.terminals) if isa(t, Symbol)] |> sort!
 function summary(m::TreeGP)
-    par = join(terminals(m),",")
-    "TreeGP[P=$(m.populationSize),Parameter[$(par)],$(keys(m.functions))]"
+    par = join(terminals(m), ",")
+    return "TreeGP[P=$(m.populationSize),Parameter[$(par)],$(keys(m.functions))]"
 end
-show(io::IO,m::TreeGP) = print(io, summary(m))
+show(io::IO, m::TreeGP) = print(io, summary(m))
 
 """
     randterm(t::TreeGP)
@@ -58,7 +58,7 @@ Returns a random terminal given the specification from the `TreeGP` object `t`.
 """
 function randterm(rng::AbstractRNG, t::TreeGP)
     term = rand(rng, keys(t.terminals))
-    if isa(term, Symbol) || isa(term, Real)
+    return if isa(term, Symbol) || isa(term, Real)
         term
     elseif isa(term, Function)
         term(rng) # terminal functions must accept RNG as an argument
@@ -75,12 +75,12 @@ randterm(t::TreeGP) = randterm(default_rng(), t)
 
 Create a random expression tree given the specification from the `TreeGP` object `t`.
 """
-function rand(rng::AbstractRNG, t::TreeGP, maxdepth::Int=2; mindepth::Int=maxdepth-1)
+function rand(rng::AbstractRNG, t::TreeGP, maxdepth::Int = 2; mindepth::Int = maxdepth - 1)
     @assert maxdepth > mindepth "`maxdepth` must be larger then `mindepth`"
     tl = length(t.terminals)
     fl = length(t.functions)
     # generate a root of a subtree
-    root = if (maxdepth == 0  || ( t.initialization == :grow && rand(rng) < tl/(tl+fl) ) ) && mindepth <= 0
+    root = if (maxdepth == 0  || (t.initialization == :grow && rand(rng) < tl / (tl + fl))) && mindepth <= 0
         randterm(rng, t)
     else
         rand(rng, keys(t.functions))
@@ -89,7 +89,7 @@ function rand(rng::AbstractRNG, t::TreeGP, maxdepth::Int=2; mindepth::Int=maxdep
     if isa(root, Function)
         args = Any[]
         for i in 1:t.functions[root]
-            arg = rand(rng, t, maxdepth-1, mindepth=mindepth-1)
+            arg = rand(rng, t, maxdepth - 1, mindepth = mindepth - 1)
             push!(args, arg)
         end
         Expr(:call, root, args...)
@@ -97,7 +97,7 @@ function rand(rng::AbstractRNG, t::TreeGP, maxdepth::Int=2; mindepth::Int=maxdep
         return root
     end
 end
-rand(t::TreeGP, maxdepth::Int=2; kwargs...) =
+rand(t::TreeGP, maxdepth::Int = 2; kwargs...) =
     rand(default_rng(), t, maxdepth; kwargs...)
 
 """
@@ -105,31 +105,35 @@ rand(t::TreeGP, maxdepth::Int=2; kwargs...) =
 
 Initialize a random population of expressions derived from `expr`.
 """
-function initial_population(m::TreeGP, expr::Union{Expr,Nothing}=nothing;
-                            rng::AbstractRNG=default_rng())
+function initial_population(
+        m::TreeGP, expr::Union{Expr, Nothing} = nothing;
+        rng::AbstractRNG = default_rng()
+    )
     n = population_size(m)
     if isnothing(expr)
-        return [ rand(rng, m, m.maxdepth, mindepth=m.mindepth) for i in 1:n ]
+        return [ rand(rng, m, m.maxdepth, mindepth = m.mindepth) for i in 1:n ]
     else
         return [ deepcopy(expr) for i in 1:n ]
     end
 end
 
-mutable struct GPState{T,IT,OT<:AbstractOptimizer} <: AbstractOptimizerState
+mutable struct GPState{T, IT, OT <: AbstractOptimizer} <: AbstractOptimizerState
     optimizer::OT
-    state::GAState{T,IT}
+    state::GAState{T, IT}
 end
 value(s::GPState) = s.state.fitness
 minimizer(s::GPState) = s.state.fittest
 
 """Initialization of GP algorithm state"""
 function initial_state(method::TreeGP, options, objfun, population)
-    ga = GA(populationSize = method.populationSize,
-            crossover = method.crossover,
-            mutation = method.mutation(method),
-            selection = method.selection,
-            crossoverRate = method.crossoverRate,
-            mutationRate = method.mutationRate)
+    ga = GA(
+        populationSize = method.populationSize,
+        crossover = method.crossover,
+        mutation = method.mutation(method),
+        selection = method.selection,
+        crossoverRate = method.crossoverRate,
+        mutationRate = method.mutationRate
+    )
     gas = initial_state(ga, options, objfun, population)
     return GPState(ga, gas)
 end
@@ -147,6 +151,5 @@ function update_state!(objfun, constraints, state::GPState, population::Abstract
 end
 
 # Custom optimization call
-optimize(f, mthd::TreeGP, options::Options = Options(;default_options(mthd)...)) =
-    optimize(f, NoConstraints(), mthd, initial_population(mthd, rng=options.rng), options)
-
+optimize(f, mthd::TreeGP, options::Options = Options(; default_options(mthd)...)) =
+    optimize(f, NoConstraints(), mthd, initial_population(mthd, rng = options.rng), options)

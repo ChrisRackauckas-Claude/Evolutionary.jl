@@ -3,23 +3,23 @@
     rng = StableRNG(42)
 
     # Objective function
-    sphere(x::AbstractVector) = sum(x.*x)
+    sphere(x::AbstractVector) = sum(x .* x)
 
     # Parameters
     N = 30
     P = 25
     initial = ones(N)
 
-    function Evolutionary.trace!(record::Dict{String,Any}, objfun, state, population, method::ES, options)
+    function Evolutionary.trace!(record::Dict{String, Any}, objfun, state, population, method::ES, options)
         record["fitpop"] = state.fitness
         record["σ"] = strategy(state).σ
     end
 
     function Evolutionary.terminate(state::Evolutionary.ESState)
-        strategy(state).σ < 1e-10
+        strategy(state).σ < 1.0e-10
     end
 
-    opts = Evolutionary.Options(show_trace=false, iterations=1000, rng=rng)
+    opts = Evolutionary.Options(show_trace = false, iterations = 1000, rng = rng)
 
     # Testing: (μ/μ_I, λ)-σ-Self-Adaptation-ES
     # with isotropic mutation operator y' := y + σ(N_1(0, 1), ..., N_N(0, 1))
@@ -30,18 +30,19 @@
             initStrategy = IsotropicStrategy(N),
             recombination = average, srecombination = average,
             mutation = gaussian, smutation = gaussian,
-            selection=:comma,
+            selection = :comma,
             μ = 3, λ = P
-        ), opts);
+        ), opts
+    )
     # show(result)
     println("(3/3,$(P))-σ-SA-ES => F: $(minimum(result)), C: $(Evolutionary.iterations(result))")
-    @test minimum(result) ≈ 0.0 atol=1e-3
-    @test sum(x->x.^2, Evolutionary.minimizer(result)) ≈ 0.0 atol=1e-3
+    @test minimum(result) ≈ 0.0 atol = 1.0e-3
+    @test sum(x -> x .^ 2, Evolutionary.minimizer(result)) ≈ 0.0 atol = 1.0e-3
     @test length(Evolutionary.minimizer(result)) == N
 
     # disable custom functions
     Evolutionary.terminate(state::Evolutionary.ESState) = false
-    Evolutionary.trace!(record::Dict{String,Any}, objfun, state, population, method::ES, options) = ()
+    Evolutionary.trace!(record::Dict{String, Any}, objfun, state, population, method::ES, options) = ()
 
     # Testing: GA
     Random.seed!(rng, 42)
@@ -54,13 +55,13 @@
             ɛ = 0.1,
             selection = susinv,
             crossover = IC(0.25),
-            mutation = BGA(fill(0.5,N)),
-           ), Evolutionary.Options(rng=rng)
-    );
+            mutation = BGA(fill(0.5, N)),
+        ), Evolutionary.Options(rng = rng)
+    )
     # show(result)
     println("GA:INTER:DOMRNG:(N=$(N), P=$(P)) => F: $(minimum(result)), C: $(Evolutionary.iterations(result))")
-    @test minimum(result) ≈ 0.0 atol=1e-2
-    @test sum(x->x.^2, Evolutionary.minimizer(result)) ≈ 0.0 atol=1e-2
+    @test minimum(result) ≈ 0.0 atol = 1.0e-2
+    @test sum(x -> x .^ 2, Evolutionary.minimizer(result)) ≈ 0.0 atol = 1.0e-2
     @test length(Evolutionary.minimizer(result)) == N
 
 end

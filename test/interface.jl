@@ -5,20 +5,20 @@
     #########
 
     using Evolutionary: value!, f_calls, BoxConstraints, PenaltyConstraints,
-                        EvolutionaryObjective
+        EvolutionaryObjective
 
     # objective function
     dimension = 5
     individual = ones(dimension)
     minval = 1.0
-    func = x->sum(x)+1
+    func = x -> sum(x) + 1
     objfun = EvolutionaryObjective(func, individual)
-    st = TestOptimizerState(individual, minval);
+    st = TestOptimizerState(individual, minval)
     mthd = TestOptimizer()
-    cnstr= Evolutionary.NoConstraints()
+    cnstr = Evolutionary.NoConstraints()
 
     # options
-    opts = Evolutionary.Options(store_trace=true; default_options(mthd)...)
+    opts = Evolutionary.Options(store_trace = true; default_options(mthd)...)
     show(IOBuffer(), opts)
 
     # population
@@ -44,19 +44,19 @@
     show(IOBuffer(), tr)
 
     # callback on state
-    opts = Evolutionary.Options(store_trace=false, callback=(s->s.iteration == 2))
+    opts = Evolutionary.Options(store_trace = false, callback = (s -> s.iteration == 2))
     tr = Evolutionary.OptimizationTrace{typeof(value(objfun)), typeof(mthd)}()
     @test Evolutionary.trace!(tr, 1, objfun, st, ppl, mthd, opts) == false
     @test Evolutionary.trace!(tr, 2, objfun, st, ppl, mthd, opts) == true
 
     # callback on trace
-    opts = Evolutionary.Options(store_trace=true, callback=(tr->length(tr)>1))
+    opts = Evolutionary.Options(store_trace = true, callback = (tr -> length(tr) > 1))
     tr = Evolutionary.OptimizationTrace{typeof(value(objfun)), typeof(mthd)}()
     @test Evolutionary.trace!(tr, 1, objfun, st, ppl, mthd, opts) == false
     @test Evolutionary.trace!(tr, 2, objfun, st, ppl, mthd, opts) == true
 
     # custom trace
-    function Evolutionary.trace!(record::Dict{String,Any}, objfun, state::TestOptimizerState, population, method, options)
+    function Evolutionary.trace!(record::Dict{String, Any}, objfun, state::TestOptimizerState, population, method, options)
         record["ppl_size"] = length(population)
     end
     tr = Evolutionary.OptimizationTrace{typeof(value(objfun)), typeof(mthd)}()
@@ -68,13 +68,13 @@
     ##########
     # RESULT #
     ##########
-    opts = Evolutionary.Options(store_trace=true)
+    opts = Evolutionary.Options(store_trace = true)
     res = Evolutionary.EvolutionaryOptimizationResults(
         mthd, individual, value(st),
         opts.iterations, opts.show_trace, opts.store_trace,
         Evolutionary.metrics(mthd), tr, f_calls(objfun),
         1.0, 1.0, opts.show_trace,
-    );
+    )
     @test summary(res) == summary(mthd)
     @test Evolutionary.minimizer(res) == individual
     @test minimum(res) == value(st)
@@ -97,34 +97,34 @@
     @test length(pop) == population_size(mthd)
     @test size(first(pop)) == (dimension,)
 
-    @test_throws AssertionError Evolutionary.initial_population(mthd, fill(BitVector(ones(dimension)),4))
-    pop = Evolutionary.initial_population(mthd, fill(BitVector(ones(dimension)),5))
+    @test_throws AssertionError Evolutionary.initial_population(mthd, fill(BitVector(ones(dimension)), 4))
+    pop = Evolutionary.initial_population(mthd, fill(BitVector(ones(dimension)), 5))
     @test length(pop) == population_size(mthd)
     @test size(first(pop)) == (dimension,)
 
-    pop = Evolutionary.initial_population(mthd, BitMatrix(ones(dimension,6)))
+    pop = Evolutionary.initial_population(mthd, BitMatrix(ones(dimension, 6)))
     @test length(pop) == population_size(mthd)
-    @test size(first(pop)) == (dimension,6)
+    @test size(first(pop)) == (dimension, 6)
 
-    pop = Evolutionary.initial_population(mthd, (()->rand(Bool,dimension)))
+    pop = Evolutionary.initial_population(mthd, (() -> rand(Bool, dimension)))
     @test length(pop) == population_size(mthd)
     @test size(first(pop)) == (dimension,)
 
-    lb = [0,1,2,-1]
-    ub = [0,3,2,1]
-    cb = Evolutionary.ConstraintBounds(lb,ub,[],[])
+    lb = [0, 1, 2, -1]
+    ub = [0, 3, 2, 1]
+    cb = Evolutionary.ConstraintBounds(lb, ub, [], [])
     pop = Evolutionary.initial_population(mthd, cb)
     @test length(pop) == population_size(mthd)
-    @test map(i->i[1],pop) == fill(ub[1], population_size(mthd))
-    @test all(map(i->lb[2] <= i[2] <= ub[2],pop))
-    @test map(i->i[3],pop) == fill(ub[3], population_size(mthd))
-    @test all(map(i->lb[4] <= i[4] <= ub[4],pop))
+    @test map(i -> i[1], pop) == fill(ub[1], population_size(mthd))
+    @test all(map(i -> lb[2] <= i[2] <= ub[2], pop))
+    @test map(i -> i[3], pop) == fill(ub[3], population_size(mthd))
+    @test all(map(i -> lb[4] <= i[4] <= ub[4], pop))
 
 
     ###########
     # OPTIONS #
     ###########
-    opts = Evolutionary.Options(;store_trace=true, iterations=7)
+    opts = Evolutionary.Options(; store_trace = true, iterations = 7)
     @test opts.store_trace
     @test opts.iterations == 7
 
@@ -153,9 +153,9 @@
 
     c = BoxConstraints(lb, ub)
     @test isfeasible(c, [0, 1, 2, 0])
-    @test value(c, [1,4,2,-2]) === nothing
-    @test apply!(c, [1,4,2,-2]) == [0,3,2,-1]
-    @test penalty(c, [1,4,2,-2]) == 0
+    @test value(c, [1, 4, 2, -2]) === nothing
+    @test apply!(c, [1, 4, 2, -2]) == [0, 3, 2, -1]
+    @test penalty(c, [1, 4, 2, -2]) == 0
 
     con_c!(x) = [sum(x)]
     cb = Evolutionary.ConstraintBounds(fill(0, 3), fill(1, 3), [1], [1])
@@ -169,31 +169,31 @@
     @test value(c, x) == [sum(x)]
     @test value(c, y) == [sum(y)]
     @test penalty(c, x) == 0.0 # c penalty
-    @test penalty(c, y) == 1+2^2+1.0 # c penalty
-    @test penalty!([1, 2], c, [x,y]) == [1, 2 + penalty(c, y)]
+    @test penalty(c, y) == 1 + 2^2 + 1.0 # c penalty
+    @test penalty!([1, 2], c, [x, y]) == [1, 2 + penalty(c, y)]
 
 
     ############
     # OPTIMIZE #
     ############
-    res =  Evolutionary.optimize(sum, (()->BitVector(rand(Bool,dimension))), mthd, opts)
+    res = Evolutionary.optimize(sum, (() -> BitVector(rand(Bool, dimension))), mthd, opts)
     @test Evolutionary.minimum(res) <= dimension
     @test length(Evolutionary.minimizer(res)) == dimension
     @test Evolutionary.iterations(res) == 7
     @test !Evolutionary.converged(res)
     @test length(Evolutionary.trace(res)) > 1
     @test length(res.metrics) == 1
-    @test res.metrics[1].tol == 1e-10
+    @test res.metrics[1].tol == 1.0e-10
 
-    o = Evolutionary.Options(abstol=1e-3)
-    res =  Evolutionary.optimize(sum, (()->BitVector(rand(Bool,dimension))), mthd, o)
+    o = Evolutionary.Options(abstol = 1.0e-3)
+    res = Evolutionary.optimize(sum, (() -> BitVector(rand(Bool, dimension))), mthd, o)
     @test length(res.metrics) == 1
-    @test res.metrics[1].tol == 1e-3
+    @test res.metrics[1].tol == 1.0e-3
 
-    o = Evolutionary.Options(abstol=1e-3, reltol=1e-4)
-    res =  Evolutionary.optimize(sum, (()->BitVector(rand(Bool,dimension))), mthd, o)
+    o = Evolutionary.Options(abstol = 1.0e-3, reltol = 1.0e-4)
+    res = Evolutionary.optimize(sum, (() -> BitVector(rand(Bool, dimension))), mthd, o)
     @test length(res.metrics) == 2
-    @test res.metrics[1].tol == 1e-3
-    @test res.metrics[2].tol == 1e-4
+    @test res.metrics[1].tol == 1.0e-3
+    @test res.metrics[2].tol == 1.0e-4
 
 end

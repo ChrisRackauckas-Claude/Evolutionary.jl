@@ -17,7 +17,7 @@ using Evolutionary, Test, Random
 function fitness(oset, bsize = 6)
     scores = Dict(i => (i != bsize ? 3i : 20) for i in 0:bsize)
     # count 1s in blocks
-    ht = Dict{Int,Int}()
+    ht = Dict{Int, Int}()
     sl = sr = 0
     for i in oset
         if i > 60
@@ -43,34 +43,35 @@ function fitness(oset, bsize = 6)
             error("Problem")
         end
         ss += scores[cnt]
-        if (cnt == 1) && ((blk+1)*bsize in oset)
+        if (cnt == 1) && ((blk + 1) * bsize in oset)
             ss += 9
         end
         #println("$blk, $cnt, $(scores[cnt]), $ss")
     end
     ss -= 2(sl > 13 ? sl : 0)
     ss -= 2(sr > 13 ? sr : 0)
-    ss
+    return ss
 end
 
-# Bit string examples 
+# Bit string examples
 bstr = "000100 001010 000010 111111 000100 101000 000010 000000 000001 000000 000010 000001 001000 000000 000000 010000 000000 000010 000000 000000"
-idxs = [i for (i,j) in enumerate(filter(c->c != ' ', bstr)) if j == '1']
+idxs = [i for (i, j) in enumerate(filter(c -> c != ' ', bstr)) if j == '1']
 @test fitness(idxs) == 50
 
 # optimal solution
-idxs_opt = [6*i for i in 1:20]
+idxs_opt = [6 * i for i in 1:20]
 @test fitness(idxs_opt) == 240
 
 # GA solution
-mthd = GA(populationSize = 100, selection = tournament(5),
-          crossover = SSX, crossoverRate = 0.99,
-          mutation  = replace(collect(1:120)), mutationRate = 0.1)
+mthd = GA(
+    populationSize = 100, selection = tournament(5),
+    crossover = SSX, crossoverRate = 0.99,
+    mutation = replace(collect(1:120)), mutationRate = 0.1
+)
 
 Random.seed!(42)
-opts = Evolutionary.Options(show_trace=false, successive_f_tol=30)
-init_pop = ()->randperm(120)[1:20]
-res = Evolutionary.optimize(idxs->-fitness(idxs), init_pop, mthd, opts)
+opts = Evolutionary.Options(show_trace = false, successive_f_tol = 30)
+init_pop = () -> randperm(120)[1:20]
+res = Evolutionary.optimize(idxs -> -fitness(idxs), init_pop, mthd, opts)
 println(res)
 Evolutionary.minimizer(res) |> sort
-

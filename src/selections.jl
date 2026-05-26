@@ -17,13 +17,15 @@ Linear ranking allows values of selective pressure in [1.0, 2.0].
 """
 function ranklinear(sp::Real)
     @assert 1.0 <= sp <= 2.0 "Selective pressure has to be in range [1.0, 2.0]."
-    function rank(fitness::Vector{<:Real}, N::Int;
-                  rng::AbstractRNG=default_rng())
+    function rank(
+            fitness::Vector{<:Real}, N::Int;
+            rng::AbstractRNG = default_rng()
+        )
         λ = length(fitness)
         idx = sortperm(fitness)
         ranks = zeros(λ)
         for i in 1:λ
-            ranks[i] = ( 2 - sp + 2*(sp - 1)*(idx[i] - 1) / (λ - 1) ) / λ
+            ranks[i] = (2 - sp + 2 * (sp - 1) * (idx[i] - 1) / (λ - 1)) / λ
         end
         return pselection(rng, ranks, N)
     end
@@ -38,14 +40,16 @@ Returns a (μ, λ)-uniform ranking selection function, see [Selection Interface]
 In uniform ranking, the best ``\\mu`` individuals are assigned a selection probability of ``1/\\mu`` while the rest them are discarded [^2].
 """
 function uniformranking(μ::Int)
-    function uniformrank(fitness::Vector{<:Real}, N::Int;
-                         rng::AbstractRNG=default_rng())
+    function uniformrank(
+            fitness::Vector{<:Real}, N::Int;
+            rng::AbstractRNG = default_rng()
+        )
         λ = length(fitness)
         idx = sortperm(fitness)
         @assert μ <= λ "μ should be no larger then $(λ)"
         ranks = zeros(length(fitness))
         for i in 1:μ
-            ranks[idx[i]] = 1/μ
+            ranks[idx[i]] = 1 / μ
         end
         return pselection(rng, ranks, N)
     end
@@ -62,10 +66,12 @@ In roulette selection, the fitness level is used to associate a probability of s
 *Note:* Best used in maximization context.
 
 """
-function roulette(fitness::Vector{<:Real}, N::Int;
-                  rng::AbstractRNG=default_rng())
+function roulette(
+        fitness::Vector{<:Real}, N::Int;
+        rng::AbstractRNG = default_rng()
+    )
     absf = abs.(fitness)
-    prob = absf./sum(absf)
+    prob = absf ./ sum(absf)
     return pselection(rng, prob, N)
 end
 
@@ -88,11 +94,11 @@ Consider ``N`` the number of individuals to be selected, then the distance betwe
 *Note*: Best used in maximization context.
 
 """
-function sus(fitness::Vector{<:Real}, N::Int; rng::AbstractRNG=default_rng())
+function sus(fitness::Vector{<:Real}, N::Int; rng::AbstractRNG = default_rng())
     F = sum(abs, fitness)
-    P = F/N
-    start = P*rand(rng)
-    pointers = [start+P*i for i = 0:(N-1)]
+    P = F / N
+    start = P * rand(rng)
+    pointers = [start + P * i for i in 0:(N - 1)]
     selected = Array{Int}(undef, N)
     i = c = 1
     for P in pointers
@@ -131,22 +137,24 @@ end
 Create a [tournament-selection](https://en.wikipedia.org/wiki/Tournament_selection) function `f`
 for a given `groupSize`. `f` chooses the winner (as chosen by `select`) among `N` random groups.
 """
-function tournament(groupSize::Int; select=argmin)
+function tournament(groupSize::Int; select = argmin)
     @assert groupSize > 0 "Group size must be positive"
-    function tournamentN(fitness::AbstractVecOrMat{<:Real}, N::Int;
-                         rng::AbstractRNG=default_rng())
-        selection = fill(0,N)
+    function tournamentN(
+            fitness::AbstractVecOrMat{<:Real}, N::Int;
+            rng::AbstractRNG = default_rng()
+        )
+        selection = fill(0, N)
         sFitness = size(fitness)
         d, nFitness = length(sFitness) == 1 ? (1, sFitness[1]) : sFitness
         tour = randperm(rng, nFitness)
         j = 1
         for i in 1:N
-            idxs = tour[j:j+groupSize-1]
+            idxs = tour[j:(j + groupSize - 1)]
             selected = d == 1 ? view(fitness, idxs) : view(fitness, :, idxs)
             winner = select(selected)
             selection[i] = idxs[winner]
-            j+=groupSize
-            if (j+groupSize) >= nFitness && i < N
+            j += groupSize
+            if (j + groupSize) >= nFitness && i < N
                 tour = randperm(rng, nFitness)
                 j = 1
             end
@@ -161,7 +169,7 @@ end
 
 Returns a collection on size `N` of uniformly selected individuals from the population.
 """
-random(fitness::Vector{<:Real}, N::Int; rng::AbstractRNG=default_rng()) =
+random(fitness::Vector{<:Real}, N::Int; rng::AbstractRNG = default_rng()) =
     rand(rng, 1:length(fitness), N)
 
 """
@@ -169,8 +177,10 @@ random(fitness::Vector{<:Real}, N::Int; rng::AbstractRNG=default_rng()) =
 
 Returns a permutation on size `N` of the individuals from the population.
 """
-function permutation(fitness::Vector{<:Real}, N::Int;
-                     rng::AbstractRNG=default_rng())
+function permutation(
+        fitness::Vector{<:Real}, N::Int;
+        rng::AbstractRNG = default_rng()
+    )
     λ = length(fitness)
     @assert λ >= N "Cannot select more then $(λ) elements"
     return randperm(rng, λ)[1:N]
@@ -181,12 +191,14 @@ end
 
 Returns a cycle selection on size `N` from an arbitrary position.
 """
-function randomoffset(fitness::Vector{<:Real}, N::Int;
-                      rng::AbstractRNG=default_rng())
+function randomoffset(
+        fitness::Vector{<:Real}, N::Int;
+        rng::AbstractRNG = default_rng()
+    )
     λ = length(fitness)
     @assert λ >= N "Cannot select more then $(λ) elements"
     rg = rand(rng, 1:λ)
-    return [(i+rg)%λ+1 for i in 1:N]
+    return [(i + rg) % λ + 1 for i in 1:N]
 end
 
 """
@@ -194,7 +206,7 @@ end
 
 Returns a collection of best individuals of size `N`.
 """
-best(fitness::Vector{<:Real}, N::Int; kwargs...) = fill(last(findmin(fitness)),N)
+best(fitness::Vector{<:Real}, N::Int; kwargs...) = fill(last(findmin(fitness)), N)
 
 
 # Utilities: selection
@@ -236,4 +248,3 @@ function twowaycomp(rc::AbstractMatrix)
         return 2
     end
 end
-
