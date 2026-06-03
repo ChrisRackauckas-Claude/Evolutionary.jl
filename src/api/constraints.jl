@@ -75,7 +75,7 @@ isfeasible(c::AbstractConstraints, x) = isfeasible(c.bounds, x, value(c, x))
 
 # Implementations
 
-"""Type for an empty set of constratins"""
+"""Type for an empty set of constraints"""
 struct NoConstraints <: AbstractConstraints end
 isfeasible(c::NoConstraints, x) = true
 getproperty(c::NoConstraints, s::Symbol) =
