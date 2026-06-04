@@ -100,8 +100,8 @@ function update_state!(objfun, constraints, state, parents::AbstractVector{IT}, 
     fitidx = Int[]
     for f in F
         if length(fitidx) + length(f) > populationSize
-            idxs = sortperm(view(state.crowding, f))
-            append!(fitidx, idxs[1:(populationSize - length(fitidx))])
+            idxs = sortperm(view(state.crowding, f), rev = true)
+            append!(fitidx, f[idxs[1:(populationSize - length(fitidx))]])
             break
         else
             append!(fitidx, f)

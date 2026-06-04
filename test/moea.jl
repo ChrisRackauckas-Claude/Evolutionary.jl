@@ -44,4 +44,65 @@
     mvs = vcat(Evolutionary.minimizer(result)...)
     @test sum(0 .<= mvs .<= 2) / length(mvs) >= 0.8 # 80% in PO ∈ [0,2]
 
+    # Regression tests for NSGA-II survivor truncation (issue #132)
+    # Deb et al. 2002 crowded comparison: among equal-rank individuals, LARGER
+    # crowding distance wins; the truncated front's sorted positions must be
+    # mapped back to population indices before selecting survivors.
+    @testset "NSGA-II truncation picks crowded-comparison survivors" begin
+        # crowding_distance!: boundary members of a single front get typemax
+        Fm = Float64[0.0 0.2 0.49 0.51 0.8 1.0;
+                     1.0 0.8 0.51 0.49 0.2 0.0]
+        nf = size(Fm, 2)
+        rks = zeros(Int, nf)
+        cdist = zeros(Float64, nf)
+        frs = Evolutionary.nondominatedsort!(rks, Fm)
+        @test length(frs) == 1 && length(frs[1]) == nf
+        Evolutionary.crowding_distance!(cdist, Fm, frs)
+        @test count(isequal(typemax(Float64)), cdist[frs[1]]) == 2
+
+        # White-box: run one deterministic update_state! step (identity
+        # operators, fixed selection) and compare the survivors written into
+        # `parents` against an independently recomputed crowded-comparison
+        # oracle over the recorded combined fitness. Parents are chosen so the
+        # first front (6 members after duplication) exceeds populationSize (5),
+        # forcing the truncation branch, with front indices that differ from
+        # their positions inside the front.
+        f2(x::AbstractVector) = [x[1]^2, (x[1] - 2)^2]
+        sel_first(fit, N; kwargs...) = collect(1:N)
+        rng2 = StableRNG(123)
+        opts2 = Evolutionary.Options(rng = rng2)
+        method = NSGA2(populationSize = 5, crossoverRate = 0.0,
+                       mutationRate = 0.0, selection = sel_first)
+        parents2 = [[0.5], [1.0], [1.5], [-0.5], [-1.0]]
+        objfun = Evolutionary.EvolutionaryObjective(f2, first(parents2))
+        state = Evolutionary.initial_state(method, opts2, objfun, parents2)
+        Evolutionary.update_state!(objfun, Evolutionary.NoConstraints(), state,
+                                   parents2, method, opts2, 1)
+
+        # oracle: fronts + crowding recomputed fresh from the combined fitness
+        n2 = 2 * method.populationSize
+        rks2 = zeros(Int, n2)
+        cd2 = zeros(Float64, n2)
+        F2 = Evolutionary.nondominatedsort!(rks2, state.fitpop)
+        @test length(F2[1]) > method.populationSize  # truncation branch exercised
+        Evolutionary.crowding_distance!(cd2, state.fitpop, F2)
+        expected = Int[]
+        for fr in F2
+            if length(expected) + length(fr) > method.populationSize
+                order = sortperm(view(cd2, fr), rev = true)
+                append!(expected, fr[order[1:(method.populationSize - length(expected))]])
+                break
+            else
+                append!(expected, fr)
+            end
+        end
+        @test length(expected) == method.populationSize
+
+        # survivors (written into parents2) must match the oracle selection,
+        # compared as fitness multisets
+        survivors_fit = sort([f2(p) for p in parents2])
+        expected_fit  = sort([state.fitpop[:, i] for i in expected])
+        @test survivors_fit == expected_fit
+    end
+
 end
