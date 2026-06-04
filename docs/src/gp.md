@@ -1,5 +1,9 @@
 # Genetic Programming
 
+```@meta
+CurrentModule = Evolutionary
+```
+
 ```@docs
 TreeGP
 ```
@@ -14,6 +18,24 @@ The [Genetic Programming](https://en.wikipedia.org/wiki/Genetic_programming) is 
 Evolutionary.Expression
 Evolutionary.randterm
 Evolutionary.simplify!
+Base.rand(::AbstractRNG, ::TreeGP)
+```
+
+## Protected Functions
+
+The following protected operators guard against domain errors (e.g. division by
+zero, logarithm of zero) so that arbitrary expression trees can be evaluated safely.
+
+```@docs
+Evolutionary.pdiv
+Evolutionary.aq
+Evolutionary.pexp
+Evolutionary.plog
+Evolutionary.psqrt
+Evolutionary.psin
+Evolutionary.pcos
+Evolutionary.ppow
+Evolutionary.cond
 ```
 
 ## References
