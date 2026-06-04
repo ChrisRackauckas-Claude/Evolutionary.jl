@@ -14,6 +14,9 @@ Consider ``M`` the number of individuals in the population, ``P`` the position o
 
 Linear ranking allows values of selective pressure in [1.0, 2.0].
 
+# References
+
+[^1]: Baker J.E., Adaptive selection methods for genetic algorithms, In Proceedings of International Conference on Genetic Algorithms and Their Applications, pp. 100-111, 1985.
 """
 function ranklinear(sp::Real)
     @assert 1.0 <= sp <= 2.0 "Selective pressure has to be in range [1.0, 2.0]."
@@ -38,6 +41,10 @@ end
 Returns a (μ, λ)-uniform ranking selection function, see [Selection Interface](@ref) with the best individuals parameter `μ`.
 
 In uniform ranking, the best ``\\mu`` individuals are assigned a selection probability of ``1/\\mu`` while the rest them are discarded [^2].
+
+# References
+
+[^2]: Schwefel H.P., Evolution and Optimum Seeking, Wiley, New York, 1995.
 """
 function uniformranking(μ::Int)
     function uniformrank(
@@ -93,6 +100,9 @@ Consider ``N`` the number of individuals to be selected, then the distance betwe
 
 *Note*: Best used in maximization context.
 
+# References
+
+[^3]: Baker, J. E., Reducing Bias and Inefficiency in the Selection Algorithm. In [ICGA2], pp. 14-21, 1987.
 """
 function sus(fitness::Vector{<:Real}, N::Int; rng::AbstractRNG = default_rng())
     F = sum(abs, fitness)

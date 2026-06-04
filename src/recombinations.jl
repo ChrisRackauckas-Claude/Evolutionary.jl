@@ -135,6 +135,10 @@ end
 Returns a uniform (binomial) crossover function, see [Recombination Interface](@ref), function with the probability `Cr` [^2].
 
 The crossover probability value must be in unit interval, ``Cr \\in [0,1]``.
+
+# References
+
+[^2]: K. V. Price and R. M. Storn and J. A. Lampinen, "Differential evolution: A practical approach to global optimization", Springer, 2005.
 """
 function BINX(Cr::Real = 0.5)
     function binxvr(v1::T, v2::T; rng::AbstractRNG = default_rng()) where {T <: AbstractVector}
@@ -184,8 +188,12 @@ end
     BSX(k::Int)
 
 Binary Subset Crossover[^7]. Produces an offspring by first pooling the unique
-items of the two parents, and then creating each offspring by sampling without 
+items of the two parents, and then creating each offspring by sampling without
 replacement at most `k` elements from the pool of items.
+
+# References
+
+[^7]: M. A. Wolters, “A Genetic Algorithm for Selection of Fixed-Size Subsets with Application to Design Problems”, J. Stat. Soft., vol. 68, no. 1, pp. 1–18, Nov. 2015.
 """
 function BSX(k::Int)
     function BSX(v1::T, v2::T; rng::AbstractRNG = default_rng()) where {T <: AbstractVector{Bool}}
@@ -298,6 +306,10 @@ Heuristic crossover (HX) recombination operation[^3] generates offspring `u` and
 - ``v = y + r (y - x)``
 
 where ``r`` is chosen uniform randomly in the interval ``[0;1)``.
+
+# References
+
+[^3]: Z. Michalewicz, T. Logan,  S. Swaminathan. "Evolutionary operators for continuous convex parameter spaces." Proceedings of the 3rd Annual conference on Evolutionary Programming, 1994.
 """
 function HX(v1::T, v2::T; rng::AbstractRNG = default_rng()) where {T <: AbstractVector}
     c1 = v1 .+ rand(rng) * (v1 .- v2)
@@ -309,6 +321,10 @@ end
     LX(μ::Real = 0.0, b::Real = 0.2)
 
 Returns a Laplace crossover (LX) recombination operation[^4], see [Recombination Interface](@ref).
+
+# References
+
+[^4]: K. Deep, M. Thakur, "A new crossover operator for real coded genetic algorithms", Applied Mathematics and Computation 188, 2007, 895–912
 """
 function LX(μ::Real = 0.0, b::Real = 0.2) # location μ, scale b > 0
     function lxxvr(v1::T, v2::T; rng::AbstractRNG = default_rng()) where {T <: AbstractVector}
@@ -326,6 +342,10 @@ end
     MILX(μ::Real = 0.0, b_real::Real = 0.15, b_int::Real = 0.35)
 
 Returns a mixed integer Laplace crossover (MI-LX) recombination operation[^5], see [Recombination Interface](@ref).
+
+# References
+
+[^5]: K. Deep, K. P. Singh, M. L. Kansal, and C. Mohan, "A real coded  genetic algorithm for solving integer and mixed integer optimization problems.", Appl. Math. Comput. 212, 505-518, 2009
 """
 function MILX(μ::Real = 0.0, b_real::Real = 0.15, b_int::Real = 0.35) # location μ, scale b > 0
     function milxxvr(v1::T, v2::T; rng::AbstractRNG = default_rng()) where {T <: AbstractVector}
@@ -347,6 +367,10 @@ end
 
 Returns a Simulated Binary Crossover (SBX) recombination operation, see [Recombination Interface](@ref),
 with the mutation probability `pm` of the recombinant component, and is the crossover distribution index `η`[^6].
+
+# References
+
+[^6]: K. Deb, R. B. Agrawal, "Simulated Binary Crossover for Continuous Search Space", Complex Syst., 9., 1995
 """
 function SBX(pm::Real = 0.5, η::Integer = 2)
     function sbxv(v1::T, v2::T; rng::AbstractRNG = default_rng()) where {T <: AbstractVector}
