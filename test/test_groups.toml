@@ -1,0 +1,20 @@
+# Root test-group matrix for Evolutionary.jl, consumed by the reusable
+# SciML/.github grouped-tests.yml@v1 workflow (Tests.yml is a thin caller).
+#
+# The functional test suite is split across two groups only to preserve the
+# original Tests.yml OS/version matrix exactly: version "1" ran on all four OS
+# runners, while "lts" and "pre" ran on ubuntu-latest only. Both groups run the
+# same suite (runtests.jl treats every non-"QA" group as the full functional
+# suite). arch is auto-detected from the runner (aarch64 on macOS-latest, x64
+# elsewhere), reproducing the old per-OS arch assignment.
+
+[Core]
+versions = ["1"]
+os = ["ubuntu-latest", "windows-latest", "macOS-15-intel", "macOS-latest"]
+
+[CoreLTSPre]
+versions = ["lts", "pre"]
+os = ["ubuntu-latest"]
+
+[QA]
+versions = ["lts", "1"]

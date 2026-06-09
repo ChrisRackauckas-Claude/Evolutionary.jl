@@ -18,32 +18,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref_name != github.event.repository.default_branch || github.ref != 'refs/tags/v*' }}
 
 jobs:
-  test:
-    name: "Tests"
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - "1"
-        os:
-          - "ubuntu-latest"
-          - "windows-latest"
-          - "macOS-15-intel"
-        arch:
-          - "x64"
-        include:
-          - version: "1"
-            os: "macOS-latest"
-            arch: "aarch64"
-          - version: "lts"
-            os: "ubuntu-latest"
-            arch: "x64"
-          - version: "pre"
-            os: "ubuntu-latest"
-            arch: "x64"
-    uses: "SciML/.github/.github/workflows/tests.yml@v1"
-    with:
-      julia-version: ${{ matrix.version }}
-      julia-arch: ${{ matrix.arch }}
-      os: ${{ matrix.os }}
-    secrets: inherit
+  tests:
+    uses: "SciML/.github/.github/workflows/grouped-tests.yml@v1"
+    secrets: "inherit"
