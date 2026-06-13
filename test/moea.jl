@@ -50,8 +50,10 @@
     # mapped back to population indices before selecting survivors.
     @testset "NSGA-II truncation picks crowded-comparison survivors" begin
         # crowding_distance!: boundary members of a single front get typemax
-        Fm = Float64[0.0 0.2 0.49 0.51 0.8 1.0;
-                     1.0 0.8 0.51 0.49 0.2 0.0]
+        Fm = Float64[
+            0.0 0.2 0.49 0.51 0.8 1.0;
+            1.0 0.8 0.51 0.49 0.2 0.0
+        ]
         nf = size(Fm, 2)
         rks = zeros(Int, nf)
         cdist = zeros(Float64, nf)
@@ -71,13 +73,17 @@
         sel_first(fit, N; kwargs...) = collect(1:N)
         rng2 = StableRNG(123)
         opts2 = Evolutionary.Options(rng = rng2)
-        method = NSGA2(populationSize = 5, crossoverRate = 0.0,
-                       mutationRate = 0.0, selection = sel_first)
+        method = NSGA2(
+            populationSize = 5, crossoverRate = 0.0,
+            mutationRate = 0.0, selection = sel_first
+        )
         parents2 = [[0.5], [1.0], [1.5], [-0.5], [-1.0]]
         objfun = Evolutionary.EvolutionaryObjective(f2, first(parents2))
         state = Evolutionary.initial_state(method, opts2, objfun, parents2)
-        Evolutionary.update_state!(objfun, Evolutionary.NoConstraints(), state,
-                                   parents2, method, opts2, 1)
+        Evolutionary.update_state!(
+            objfun, Evolutionary.NoConstraints(), state,
+            parents2, method, opts2, 1
+        )
 
         # oracle: fronts + crowding recomputed fresh from the combined fitness
         n2 = 2 * method.populationSize
@@ -101,7 +107,7 @@
         # survivors (written into parents2) must match the oracle selection,
         # compared as fitness multisets
         survivors_fit = sort([f2(p) for p in parents2])
-        expected_fit  = sort([state.fitpop[:, i] for i in expected])
+        expected_fit = sort([state.fitpop[:, i] for i in expected])
         @test survivors_fit == expected_fit
     end
 
