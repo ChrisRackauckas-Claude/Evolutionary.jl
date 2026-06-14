@@ -1,3 +1,6 @@
+using Evolutionary
+using Test
+
 @testset "Evolutionary Objective" begin
 
     v = Evolutionary.default_values(ones(3))

@@ -1,3 +1,5 @@
+using Evolutionary
+using Test
 import Evolutionary: value, population_size, default_options, minimizer,
     initial_state, update_state!
 

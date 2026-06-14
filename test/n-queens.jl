@@ -1,3 +1,8 @@
+using Evolutionary
+using Test
+using Random
+using StableRNGs
+
 @testset "n-Queens" begin
     rng = StableRNG(42)
 
