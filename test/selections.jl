@@ -1,3 +1,9 @@
+using Evolutionary
+using Test
+using Random
+using Statistics
+using StableRNGs
+
 @testset "Selections" begin
 
     rng = StableRNG(42)

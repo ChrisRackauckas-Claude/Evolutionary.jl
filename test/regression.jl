@@ -1,3 +1,9 @@
+using Evolutionary
+using Test
+using Random
+using LinearAlgebra
+using StableRNGs
+
 @testset "Regression" begin
 
     rng = StableRNG(42)

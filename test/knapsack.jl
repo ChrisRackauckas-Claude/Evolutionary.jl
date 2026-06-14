@@ -1,3 +1,8 @@
+using Evolutionary
+using Test
+using Random
+using StableRNGs
+
 @testset "Knapsack" begin
     rng = StableRNG(42)
 

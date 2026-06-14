@@ -1,3 +1,7 @@
+using Evolutionary
+using Test
+include("types.jl")
+
 @testset "API" begin
 
     #########
