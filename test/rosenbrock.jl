@@ -86,6 +86,18 @@ using StableRNGs
     println("(5,10)-CMA-ES [10 dimensions] => F: $(minimum(result)), C: $(Evolutionary.iterations(result))")
     test_result(result, 10, 1.0e-6)
 
+    # CMA-ES with a step size larger than the box: the clipped offspring shrink it
+    Random.seed!(rng, 42)
+    m = CMAES(mu = 5, lambda = 10, sigma0 = 100.0)
+    opts = Evolutionary.Options(rng = rng)
+    objfun = Evolutionary.EvolutionaryObjective(rosenbrock10, zeros(10))
+    population = [rand(rng, 10) for _ in 1:m.μ]
+    state = Evolutionary.initial_state(m, opts, objfun, population)
+    for itr in 1:100
+        Evolutionary.update_state!(objfun, BoxConstraints(-5.0, 10.0, 10), state, population, m, opts, itr)
+    end
+    @test state.σ < 15
+
     # CMA-ES under random selection: the step size neither collapses nor explodes,
     # and the covariance matrix stays symmetric
     Random.seed!(rng, 42)
