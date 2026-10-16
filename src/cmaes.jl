@@ -201,7 +201,9 @@ function update_state!(
     rank_1 = c_1 .* state.s * state.s'
     # perform rank-μ update with the steps y = B * D * z
     y_λ = B * D * z_λ
-    rank_μ = c_μ * sum((w ≥ 0 ? 1 : N / norm(B * zi)^2) * w * (yi * yi') for (w, zi, yi) in zip(w, eachcol(z_λ), eachcol(y_λ)))
+    # a zero step has no direction and contributes nothing to the active update
+    active(zi) = (n = norm(B * zi); iszero(n) ? zero(n) : N / n^2)
+    rank_μ = c_μ * sum((w ≥ 0 ? 1 : active(zi)) * w * (yi * yi') for (w, zi, yi) in zip(w, eachcol(z_λ), eachcol(y_λ)))
     # update covariance
     c1a = c_1 * (1 - (1 - h_σ) * c_c * (2 - c_c))
     state.C .= (1 - c1a - c_μ * sum(w)) .* state.C + rank_1 + rank_μ

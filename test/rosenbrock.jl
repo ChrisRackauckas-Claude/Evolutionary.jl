@@ -98,6 +98,21 @@ using StableRNGs
     end
     @test state.σ < 15
 
+    # CMA-ES offspring repaired onto the parent keep the covariance matrix finite
+    for (dim, initial, constraints) in (
+            (1, zeros(1), BoxConstraints(0.0, 1.0, 1)),
+            (3, fill(0.3, 3), BoxConstraints(fill(0.3, 3), fill(0.3, 3))),
+        )
+        Random.seed!(rng, 42)
+        m = CMAES(mu = 5, lambda = 10)
+        opts = Evolutionary.Options(rng = rng)
+        objfun = Evolutionary.EvolutionaryObjective(x -> sum(abs2, x .- 0.5), zeros(dim))
+        population = [copy(initial) for _ in 1:m.μ]
+        state = Evolutionary.initial_state(m, opts, objfun, population)
+        Evolutionary.update_state!(objfun, constraints, state, population, m, opts, 1)
+        @test all(isfinite, state.C)
+    end
+
     # CMA-ES under random selection: the step size neither collapses nor explodes,
     # and the covariance matrix stays symmetric
     Random.seed!(rng, 42)
